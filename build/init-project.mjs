@@ -77,7 +77,15 @@ while (!/^[a-z][a-z0-9]*-$/.test(prefix) || prefix === "acme-") {
 
 const nsDefault = prefix.replace(/-$/, "").replace(/(^|[-_])(\w)/g, (_, __, c) => c.toUpperCase());
 const jsNs = await ask(`JS namespace for Web Component helpers, window.<Ns>Toast (e.g. ${nsDefault})`, has(cfg.jsNamespace) ? cfg.jsNamespace : nsDefault, "js-namespace");
-const themeModule = await ask("ODC theme module name (used for self-hosted font paths, e.g. NimbusTheme)", has(cfg.odcThemeModule) ? cfg.odcThemeModule : "", "theme-module");
+/* O11 projects have no tenant MCP endpoint — Service Studio's own MCP server is the design-time
+ * channel there, configured per machine, not per repo. Asked before the theme module so the
+ * prompt can say which platform the module lives on. */
+let environment = String(await ask("Platform: ODC or O11", cfg.environment || "ODC", "environment")).trim().toUpperCase();
+if (!["ODC", "O11"].includes(environment)) {
+  throw new Error(`Unknown environment "${environment}". Expected ODC or O11.`);
+}
+
+const themeModule = await ask(`${environment} theme module name (used for self-hosted font paths, e.g. NimbusTheme)`, has(cfg.odcThemeModule) ? cfg.odcThemeModule : "", "theme-module");
 const repo = await ask("GitHub repo (owner/repo)", has(cfg.repo) ? cfg.repo : "", "repo");
 const figmaUrl = await ask("Figma library URL (blank if not yet known)", has(cfg.figma?.url) ? cfg.figma.url : "", "figma-url");
 const figmaKey = figmaUrl.match(/(?:file|design)\/([A-Za-z0-9]+)/)?.[1] ?? "";
@@ -90,7 +98,7 @@ const figmaKey = figmaUrl.match(/(?:file|design)\/([A-Za-z0-9]+)/)?.[1] ?? "";
  * NEVER guess it. A wrong tenant points every ODC call at somebody else's environment and
  * could publish into it. Blank is the correct answer when unknown: the value stays
  * <<ODC_TENANT>> and check:config keeps failing until a human fills it in. */
-const odcTenantRaw = await ask(
+const odcTenantRaw = environment === "O11" ? "" : await ask(
   "ODC tenant hostname (e.g. acme.outsystems.dev — blank if not yet known)",
   has(cfg.odcTenant) ? cfg.odcTenant : "",
   "odc-tenant"
@@ -142,8 +150,10 @@ Object.assign(cfg, {
   designSystemName: dsName,
   classPrefix: prefix,
   jsNamespace: jsNs,
+  environment,
   odcThemeModule: themeModule,
-  odcTenant: odcTenant || "<<ODC_TENANT>>",
+  // null, not a placeholder, on O11: there is no tenant to fill in later.
+  odcTenant: environment === "O11" ? null : odcTenant || "<<ODC_TENANT>>",
   repo,
   figma: { fileKey: figmaKey || "<<FIGMA_FILE_KEY>>", url: figmaUrl || "<<FIGMA_URL>>" },
   board: {
@@ -166,6 +176,8 @@ if (odcTenant) {
   mcp.mcpServers = { ...(mcp.mcpServers ?? {}), outsystems: { type: "http", url: `https://${odcTenant}/mcp` } };
   writeFileSync(MCP, JSON.stringify(mcp, null, 2) + "\n");
   console.log(`  wrote .mcp.json → https://${odcTenant}/mcp`);
+} else if (environment === "O11") {
+  console.log("  .mcp.json not needed on O11 — design-time access is Service Studio's own MCP server.");
 } else {
   console.log("  .mcp.json NOT written — no ODC tenant given; check:config will fail until it is.");
 }
