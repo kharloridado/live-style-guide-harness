@@ -173,7 +173,19 @@ SCAN_DIRS.forEach((d) => walk(join(root, d)));
 const MCP_PATH = join(root, ".mcp.json");
 const tenant = cfg.odcTenant;
 const tenantSet = typeof tenant === "string" && tenant.trim() !== "" && !tenant.includes("<<");
-if (!tenantSet) {
+const environment = cfg.environment ?? "ODC";
+if (!["ODC", "O11"].includes(environment)) {
+  errors.push(`environment is ${JSON.stringify(environment)} — must be "ODC" or "O11".`);
+} else if (environment === "O11") {
+  /* O11 has no tenant MCP endpoint; Service Studio's MCP server is per machine. A tenant here
+   * would mean the config was copied from an ODC project, so say so rather than ignore it. */
+  if (tenant != null) {
+    errors.push(
+      `environment is "O11" but odcTenant is ${JSON.stringify(tenant)}. O11 has no tenant MCP ` +
+        "endpoint — set odcTenant to null (re-run `npm run init --environment=O11`)."
+    );
+  }
+} else if (!tenantSet) {
   errors.push(
     'odcTenant is unset. Re-run `npm run init --odc-tenant=<tenant>.outsystems.dev`. ' +
       "Do NOT guess it: a wrong tenant points every ODC call at somebody else's environment."
