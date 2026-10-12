@@ -24,6 +24,12 @@ and what they have to re-paste.
 
 ### Added
 
+- **O11 projects.** `npm run init -- --environment=O11` sets up an OutSystems 11 project. It
+  skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: on O11, design-time
+  access goes through Service Studio's own MCP server. `check:config` passes without a tenant on
+  O11, and `build:osui` builds the O11 version of OutSystems UI, so the fidelity gate measures
+  against the framework the environment actually serves. ODC projects are unchanged.
+
 - **Mentor guide: structural handovers.** `handover/MENTOR-STUDIO-PROMPT.md` gains a method for
   prompts that restructure a Layout or shared `Common` Blocks: start from the live DOM, give Mentor
   the target HTML with a widget legend ("build real widgets, never paste this HTML"), keep the
