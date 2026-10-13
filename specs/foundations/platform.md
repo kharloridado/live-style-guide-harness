@@ -172,6 +172,44 @@ mispositioned arrow and a pile of dead rules that matched nothing — each obvio
 looked at the rendered element — and a multi-select restyle rendered wrong three times running, each
 time because it was written against the SCSS rather than the DOM the provider actually produced.
 
+### 10. A per-row class goes on the Row Cells — the Reactive Table evaluates Row Style once
+
+The Table widget's `StyleRow` is compiled into one cached value for the whole table, evaluated outside the
+row iteration: `getCurrentRowNumber(callContext.iterationContext)` returns 0 there, so an expression on the
+current row gives every row the same class. Row Cell `Style` **is** evaluated per row. Put a row-state
+modifier on every Row Cell, or set it on the `<tr>` from a JavaScript node keyed on
+`<List>.CurrentRowNumber` and called from the screen's OnRender (which fires on the first render and after
+every fetch, page change and sort). Write the CSS so it matches the modifier on the `td` and on the `<tr>`.
+`<Table>.Id` is the id of the `<table>` element itself.
+
+**Why:** a row modifier on `StyleRow` published without error and never appeared on a single row (O11
+Reactive, 2026-10-12); the compiled `…mvc.js` showed the cached table-level value. ODC Reactive runs the
+same client runtime — confirm on the first ODC table.
+
+### 11. Inside a table-row event, `List.Current` means the clicked row — don't ListFilter the table's own list
+
+A screen action fired from a widget inside a Table row runs with that row's iteration context. A ListFilter whose
+Condition reads `GetX.List.Current…` compiles to `getCurrent(callContext.iterationContext)`, so every element is
+tested against the **clicked** row, not the element being filtered. Remove or edit rows by index instead:
+`ListRemove(GetX.List, RowIndex)`, `ListInsert(…, RowIndex + 1)`, `GetX.List[RowIndex].…`, with `RowIndex` passed as
+`GetX.List.CurrentRowNumber` from the row's link.
+
+**Why:** a Delete built as mark-then-ListFilter removed nothing on one click and every row on the next (O11
+Reactive, 2026-10-12); the compiled `…mvc.js` showed the row-bound `getCurrent`. ListRemove by index fixed it.
+
+### 12. A consumer runs the producer version it was last compiled with — publishing the producer is not enough
+
+On O11 a Reactive app compiles the stylesheets of the themes it references into its own module and serves
+them from `/<ConsumerApp>/css/<ThemeModule>.<Theme>.css?<hash>`; publishing the theme module updates only
+`/<ThemeModule>/css/…`. Every consumer keeps the copy it was last compiled with until its references are
+refreshed and it is republished. On ODC a library is versioned and each app must update to the new version
+and be republished. Either way, a new public Client Action or Block reaches a consumer only once it is added
+to that consumer's dependencies — a human step in Manage Dependencies.
+
+**Why:** after a theme publish (O11, 2026-10-13) the producer's CSS had the new rules and the consumer's own
+copy did not; the publish listed every consumer as "Outdated Consumer". Verify a deploy in a consumer's own
+served CSS and compiled `…mvc.js`, never the producer's (`deploy/CHECKLIST.md` step 6).
+
 ## This project's ODC environment
 
 Fill in at kickoff (`/outsystems-loop:project-setup` asks for it). The tenant itself is
@@ -180,7 +218,9 @@ Fill in at kickoff (`/outsystems-loop:project-setup` asks for it). The tenant it
 
 | Module / app | Role |
 |---|---|
-| `<<ODC_THEME_MODULE>>` | The theme module. `dist/theme.css` is pasted here; self-hosted font paths resolve against it. |
+| `<<ODC_THEME_MODULE>>` | The theme module. Its stylesheet is **generated** (`dist/theme.css` is pasted here; self-hosted font paths resolve against it) — or, for an existing theme this repo did not create, **hand-maintained**: say which, because `deploy/CHECKLIST.md` replaces a generated stylesheet and appends a `src/blocks/` section to a hand-maintained one. |
+| _Patterns module_ | Where released Client Actions and Blocks go, beside their siblings; note its folders and conventions (Public, Shareable, script header kept in the JavaScript node). |
+| _Verification consumer_ | An app and screen the deploy checklist verifies on (step 6). |
 | _Live Style Guide module_ | Where style-guide pages render; publish a widget here to inspect what ODC really renders. |
 | _Sandbox app_ | For trying widgets and Web Components before a handover is written. |
 

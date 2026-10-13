@@ -24,6 +24,15 @@ and what they have to re-paste.
 
 ### Added
 
+- **Deploy through MCP, with a check at every step.** `deploy/CHECKLIST.md` takes merged work into
+  OutSystems through a design-time MCP: gate (is an MCP active, are the modules open), read before
+  write, dry run, apply and read back, merge and publish, verify in a consumer, record. Each step
+  names its check and pass condition; the filled-in table goes in the PR or release notes.
+  `CLAUDE.md` → "Deploying" makes it the first route and keeps the handover issue as the fallback
+  when no MCP is active. Proven on an O11 project; ODC falls back until an ODC deploy passes it.
+- **Platform rules 10–12** in `specs/foundations/platform.md`: per-row classes go on the Row Cells
+  or the `<tr>` (Row Style is evaluated once per table); don't ListFilter a table's own list from a
+  row event; a consumer runs the producer version it was last compiled with.
 - **O11 projects.** `npm run init -- --environment=O11` sets up an OutSystems 11 project. It
   skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: on O11, design-time
   access goes through Service Studio's own MCP server. `check:config` passes without a tenant on
