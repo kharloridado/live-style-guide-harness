@@ -67,6 +67,12 @@ then clear what `check:state` now warns about.
     the token audit. `handover/lsg-foundations.md` installs both.
   - **Usage specs gain §9, "Live Style Guide"**: the page, definition, "When to use", provenance,
     preview and class inspector. `check:state` warns when a component or pattern spec lacks it.
+- **L5 components are custom Blocks with a required Script.** Hard rule 5 changes: a component
+  OutSystems UI does not ship is an OutSystems Block (widgets, placeholders, typed inputs) with at
+  most one vanilla-JS Script exposing `window.<Ns>.<Block>.init / update / destroy`, called from
+  the Block's OnReady, OnParametersChanged and OnDestroy. A handover-map JS destination naming a
+  "Required Script" makes `embed:handover` derive the matching Mentor prompt (or Service Studio
+  steps). Web Components remain for projects that already ship them.
 - **Modules and applications are part of setup.** `project.config.json` → `modules` names where the
   work lands, by role: `theme`, `patterns`, `liveStyleGuide`, `template` (and `patPreview` on O11),
   with each one's kind, and on O11 its application. `npm run init` asks for each with the

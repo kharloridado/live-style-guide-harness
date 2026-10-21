@@ -153,6 +153,20 @@ the target HTML, then "No CSS, no JavaScript, no other changes. List what you ch
 
 ---
 
+## L5 — a custom Block with a required Script (the default)
+
+A component OutSystems UI does not ship is an OutSystems Block: widgets, placeholders and typed
+input parameters, styled by the theme, plus one Script the Block requires for behaviour. Its
+handover has a `## The Block` section — inputs, placeholders, events, the widget tree with Style
+Classes, the named widget the script works on, and the three lifecycle calls — and its map entry
+names the JS destination as the Block's **Required Script**. `npm run embed:handover` then derives
+the prompt: Static Entities first, the Block interface, the widget tree, `Raise<Event>` actions,
+then OnReady (`init`), OnParametersChanged (`update`) and OnDestroy (`destroy`), each a "Run
+JavaScript" node keyed by the named widget's `.Id`. `handover/lsg-foundations.md` is a worked
+example.
+
+The sections below are for projects that already ship **Web Components**.
+
 ## A) Reusable template (fill the `<<…>>` blanks)
 
 ```

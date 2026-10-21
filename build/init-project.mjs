@@ -69,7 +69,7 @@ while (!/^[a-z][a-z0-9]*-$/.test(prefix) || prefix === "acme-") {
 }
 
 const nsDefault = prefix.replace(/-$/, "").replace(/(^|[-_])(\w)/g, (_, __, c) => c.toUpperCase());
-const jsNs = await ask(`JS namespace for Web Component helpers, window.<Ns>Toast (e.g. ${nsDefault})`, has(cfg.jsNamespace) ? cfg.jsNamespace : nsDefault, "js-namespace");
+const jsNs = await ask(`JS namespace for custom Block scripts, window.<Ns>.<Block> (e.g. ${nsDefault})`, has(cfg.jsNamespace) ? cfg.jsNamespace : nsDefault, "js-namespace");
 /* Asked first: it decides the module kinds below, whether there is a tenant MCP endpoint (ODC only),
  * and how handovers are written (Mentor prompts on ODC, Service Studio steps on O11). */
 let environment = String(await ask("Platform: ODC or O11", cfg.environment || "ODC", "environment")).trim().toUpperCase();

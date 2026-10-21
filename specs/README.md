@@ -68,7 +68,8 @@ publishes it as the review Artifact.
 - `<!-- include: <id> -->` renders another item's specimen at that point, one level deep, for
   probes that check a composition or collateral. Position matters: probes that pick
   `nodes[index]` count matches in document order.
-- `<script data-src="src/components/x.js"></script>` loads a Web Component the way ODC does.
+- `<script data-src="src/components/x.js"></script>` loads a custom Block's Script the way ODC does;
+  follow it with an inline `<script>` that calls `init` for each instance in the specimen.
 - Chrome classes are `<<CLASS_PREFIX>>specimen__*` and ship nothing to ODC.
 - The review Artifact opens on a **Demo** of the component. It hides `<<CLASS_PREFIX>>specimen__note` and
   `<<CLASS_PREFIX>>specimen__finding` blocks, included specimens, and every section whose heading carries
@@ -86,7 +87,7 @@ Only spec what exists in this project; a small, accurate spec beats a comprehens
 ## 1. Metadata
 | | |
 |---|---|
-| Category | Component · restyle of the native OutSystems UI <Widget> (or: Web Component, Pattern) |
+| Category | Component · restyle of the native OutSystems UI <Widget> (or: custom Block + Script, Pattern) |
 | Status | <from loop/state.json> |
 | Delivered as | `src/blocks/<file>.css` (Theme CSS) · `src/components/<file>.js` (Script) |
 | Frozen ref | [`<id>/ref.md`](<id>/ref.md) |
@@ -101,7 +102,8 @@ The parts, by the OutSystems widget / DOM names a developer sees in ODC Studio.
 | Part | Property | Token |
 
 ## 5. Props / API
-Widget properties, ExtendedClass modifiers, Web Component attributes and JS API.
+Widget properties, ExtendedClass modifiers; for a custom Block, its inputs, placeholders, events
+and the Script's `init` options and callbacks.
 
 ## 6. States
 | State | What changes | Notes |

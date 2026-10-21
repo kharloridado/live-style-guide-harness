@@ -20,7 +20,8 @@
  * A MAP entry is either `[[file, lang, dest], …]` (files only) or
  * `{ files: [[…]], mentor: { … } }` to override the auto-derived Mentor prompt with a
  * fully-filled one. When `mentor` is absent the prompt is derived from the artifact kind
- * (Web Component / native-widget restyle / Style-Guide reference).
+ * (custom Block with a required Script / Web Component / native-widget restyle / Style-Guide
+ * reference). A JS file whose destination names a "Required Script" is a custom Block's.
  *
  * `mentor: { text: "…" }` is the escape hatch: the prompt is taken VERBATIM from the map.
  * `mentor: { prompts: [{ title, text }, …] }` renders several verbatim prompts, one subsection each,
@@ -451,6 +452,52 @@ function wcGeneric(block, tag, jsFile, dest) {
   ].join("\n");
 }
 
+// Custom Block prompt: real widgets + placeholders + typed inputs, one required Script driven by the
+// Block's lifecycle. Mentor builds it from this handover's "## The Block" section.
+function blockGeneric(block, jsFile) {
+  const api = `${NS}.${block}`;
+  return [
+    `Goal: In ODC Studio, build the OutSystems Block "${block}" for the ${DS} design system: real`,
+    `widgets, placeholders and typed input parameters, with one required Script for its behaviour.`,
+    `Module: ${PATTERNS}.`,
+    ``,
+    `Context (already done manually — do NOT re-create or edit these):`,
+    `- dist/theme.css, including this component's CSS, is pasted into the theme. Do NOT write CSS.`,
+    `- ${jsFile} is imported in this module as a Script. It defines window.${api} with init, update`,
+    `  and destroy. Do NOT author or modify JavaScript beyond the three calls in step 5.`,
+    ``,
+    `Task — take every name from this handover's "The Block" section and create, referencing each`,
+    `by the exact name given (paste that section into the chat so the names are real):`,
+    ``,
+    `1. Static Entities for every enumerable input (variant, size, state, orientation): a single Text`,
+    `   attribute "Value" set as the record Identifier (delete the default Id, Label, Order and`,
+    `   Is_Active), one record per allowed value, holding the literal the CSS expects.`,
+    `2. The Block "${block}" with its input parameters (Static Entity Identifiers, Booleans, Text),`,
+    `   its Placeholders and its Block events. Do NOT add a string Id input.`,
+    `3. The widget tree exactly as the handover shows it, with each widget's Style Classes /`,
+    `   ExtendedClass expression as given (ODC requires an expression on every Extended Class).`,
+    `   Build real widgets; never paste HTML into an Expression or an HTML Element. Name the widget`,
+    `   the script works on as the handover says.`,
+    `4. For each Block event, a Client Action on the Block named "Raise<Event>" holding a single`,
+    `   Trigger Event node, with one input per event parameter passed straight through.`,
+    `5. Three Block event handlers, each a Client Action with one "Run JavaScript" node whose`,
+    `   WidgetId (Text) input = <the named widget>.Id, plus the inputs the call reads. Paste the`,
+    `   calls from the handover verbatim:`,
+    `     OnReady:             ${api}.init($parameters.WidgetId, { … }, { onX: function (v) { $actions.RaiseOnX(v); } });`,
+    `     OnParametersChanged: ${api}.update($parameters.WidgetId, { … });`,
+    `     OnDestroy:           ${api}.destroy($parameters.WidgetId);`,
+    `   Store nothing on $public.`,
+    `6. Set the Script as the Block's only Required Script. Do not include it module-wide.`,
+    ``,
+    `Constraints: never edit the OutSystems UI module; add no CSS or hard-coded values (styling`,
+    `comes from var(--token) in the Theme). After generating, list every element you created by`,
+    `name and flag anything you could not finish.`,
+    ``,
+    `Work iteratively: create the Static Entities and the Block interface (step 1–2) and show them`,
+    `to me before building the widget tree.`,
+  ].join("\n");
+}
+
 // Native-widget restyle prompt: most work is using the right widget + Extended Class.
 function restyleGeneric(block, cssFile) {
   return [
@@ -505,6 +552,7 @@ function forO11(text) {
     .replace(/the ODC Theme editor/g, "the theme module's style sheet")
     .replace(/ODC requires (an expression|one)/g, "the platform requires $1")
     .replace(/ \(paste the relevant table into the chat so I work from real names\)/, "")
+    .replace(/ \(paste that section into the chat so the names are real\)/, "")
     .replace(/After generating, list[\s\S]*$/, "")
     .trimEnd();
 }
@@ -525,9 +573,13 @@ function derivedPrompt(md, entry) {
   const cssArt = arts.find((a) => a[1] === "css");
   const destStr = arts.map((a) => a[2]).join(" ");
   const kind = (m && m.kind) ||
-    (jsArt ? (/Script resource/i.test(destStr) ? "web-component" : "reference") : "restyle");
+    (jsArt
+      ? /Required Script/i.test(destStr) ? "custom-block"
+        : /Script resource/i.test(destStr) ? "web-component" : "reference"
+      : "restyle");
   const block = pascal(md);
 
+  if (kind === "custom-block") return blockGeneric(block, basename(jsArt[0]));
   if (kind === "web-component") {
     const tag = basename(jsArt[0], ".js");
     return wcGeneric(block, tag, basename(jsArt[0]), jsArt[2]);
@@ -566,8 +618,8 @@ function mentorSection(md, entry) {
     MENTOR_MARKER,
     ``,
     `> Paste this into **ODC Mentor Studio** to scaffold the OutSystems side of this handover`,
-    `> (Block, attribute bindings, event wiring, Client Actions). Mentor is a logic/data agent —`,
-    `> it does **not** author the CSS or the Web Component, so do the paste/import steps in the`,
+    `> (Block, inputs, widgets, event wiring, Client Actions). Mentor is a logic/data agent —`,
+    `> it does **not** author the CSS or the JavaScript, so do the paste/import steps in the`,
     `> checklist first. Reusable template + notes: \`handover/MENTOR-STUDIO-PROMPT.md\`.`,
     ``,
     "```",

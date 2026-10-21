@@ -2,7 +2,7 @@
 
 Start every OutSystems design-system engagement here. Figma designs (or written specs of a live
 app) in; three pasteable artifacts out: the **theme** (`dist/theme.css`), **block CSS** that
-restyles native OutSystems UI widgets, and **vanilla JS Web Components**. Every build is reviewed
+restyles native OutSystems UI widgets, and **custom Blocks** with a required vanilla-JS Script. Every build is reviewed
 as a published Artifact: the component beside its Figma frame, its measured values against the
 judged baseline, its findings, and the code to paste into ODC or O11.
 
