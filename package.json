@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "OutSystems design-system project: specs, token layer and audit, theme build, fidelity gate and one review Artifact per build. Behaviour lives in the lsg Claude Code plugin (4.x).",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "init": "node build/init-project.mjs",

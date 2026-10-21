@@ -6,7 +6,7 @@
  * docs. After this runs, `npm run check:config` passes and the build works.
  *
  * Usage:  npm run init   (re-runnable; shows current values as defaults) */
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, unlinkSync } from "node:fs";
 import { join, relative } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
@@ -49,8 +49,8 @@ Answer once — these values are written everywhere they are needed.
 `);
 
 const cfg = JSON.parse(readFileSync(CONFIG, "utf8"));
-/* First run on a fresh copy of the template: its release notes and version are the template's,
- * not this project's, and are reset below. */
+/* First run on a fresh copy of the template: its release notes, version and LICENSE are the
+ * template's, not this project's, and are reset below. */
 const firstRun = JSON.stringify(cfg).includes("<<");
 const has = (v) => v && !/^<<.*>>$/.test(v);
 
@@ -226,10 +226,17 @@ if (firstRun) {
     if (!existsSync(path)) continue;
     const json = JSON.parse(readFileSync(path, "utf8"));
     json.version = "0.0.0";
+    delete json.license;
+    if (json.packages?.[""]) delete json.packages[""].license;
     if (json.packages?.[""]) json.packages[""].version = "0.0.0";
     writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
   }
   console.log("  version reset to 0.0.0 — the first `npm run release -- minor` makes it 0.1.0");
+  const LICENSE = join(root, "LICENSE");
+  if (existsSync(LICENSE)) {
+    unlinkSync(LICENSE);
+    console.log("  removed the template's LICENSE — choose this project's own");
+  }
 }
 
 await rl?.close();
