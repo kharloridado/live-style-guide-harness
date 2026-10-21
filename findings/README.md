@@ -17,7 +17,7 @@ Focus rings (in the design's own colors), keyboard handlers, ARIA, semantic HTML
 3. GitHub Issue per `high+` finding, via `gh` from Claude Code:
    ```bash
    gh issue create --title "FND-001 [a11y/contrast] ..." --body-file findings/tickets/FND-001.md \
-     --label "finding,a11y,sev:high" --repo <owner/repo>
+     --label "finding,bug,a11y,sev:high" --repo <owner/repo>
    ```
 4. First-time repo setup: `.github/setup-finding-labels.sh <owner/repo>`.
 5. Slack (optional): `/github subscribe <owner/repo> issues +label:finding`.

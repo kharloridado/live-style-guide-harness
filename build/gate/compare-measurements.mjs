@@ -8,10 +8,7 @@
  *     Every push  "Did this change?"      this script              free, forever
  *     On demand   "Is this still right?"  /revalidate              when asked
  *
- * That makes a CI gate possible with no API key and no tokens spent, and turns every
- * committed probes.json into a permanent visual regression test. The suite grows with
- * each deliverable, so a token change that breaks component #3 is caught while
- * building component #9.
+ * No API key, no tokens: every committed probes.json becomes a permanent regression test.
  *
  *   node build/gate/compare-measurements.mjs --baseline a.json --current b.json
  *   node build/gate/compare-measurements.mjs --all        # every specs/<kind>/<id>/
@@ -24,13 +21,11 @@
  *     is a font-family string diff, and that is perfectly stable.
  *
  *   - rect / ink GEOMETRY depends on font rasterisation and is compared with a
- *     tolerance and reported as INFORMATIONAL. A naive deep-equal would fail every
- *     pull request on sub-pixel noise, and a gate that cries wolf every time teaches
- *     people to click through it — at which point it misses the real regression too.
+ *     tolerance and reported as INFORMATIONAL, so sub-pixel noise never fails a PR.
  *
  * There is deliberately NO --update flag. A baseline is a judged artifact; refreshing
  * one without re-judging would launder an unreviewed change into the record. If a
- * token change is intentional, re-judge the item with /outsystems-loop:revalidate.
+ * token change is intentional, re-judge the item with /lsg:revalidate.
  *
  * Exit codes:
  *   0  no regressions (informational geometry drift is allowed)

@@ -1,15 +1,8 @@
 #!/usr/bin/env node
 /* check-stylesheets.mjs — structural guard for every hand-written stylesheet.
  *
- * `validate-theme.mjs` already refuses to let a structurally broken dist/theme.css through
- * the gate, and says in its own comments that an unbalanced brace is "the single most
- * likely way to corrupt the whole theme". That was right, and its scope was too narrow:
- * dist/theme.css is ASSEMBLED, while the files that actually got corrupted are the ones
- * humans and agents MERGE BY HAND.
- *
- * Three times now, a conflict boundary fell inside a rule, left it open, and silently
- * deleted the next item's entire chrome section from the rendered page — see
- * build/lib/css-structure.mjs for the three, what each cost, and why no parser reports it.
+ * dist/theme.css is checked after assembly; this checks the files people and agents merge by
+ * hand, so a stray brace is caught at its origin (see build/lib/css-structure.mjs).
  *
  * Scope: src/blocks/*.css, src/components/*.css, build/review/*.css (the specimen chrome) and
  * tokens/*.css. Everything a person edits, plus the token sources the theme is built from,

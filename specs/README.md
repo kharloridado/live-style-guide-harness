@@ -47,9 +47,11 @@ A folder with only `NOTES.md` is evidence, not a ref.
 
 - Capture every size variant and every device frame. Figma variables are mode-bound: one name
   can resolve to different values per size or device, and that makes it several tokens, not one.
+- A handover note or design-system page that says "single size" or "not responsive" is a claim,
+  not evidence. Check it against the file's own size and variant collections.
 - The Figma file key is part of the ref. If it differs from `figma.fileKey` in
   `project.config.json`, the ref may be stale — `npm run sync` lists them. Re-snapshot before
-  building or judging against old values, and log the supersession in `loop/figma-links.md`.
+  building or judging against old values, and record the superseded key in the new `ref.md`.
 - A whole documentation page is usually too large for one `get_design_context` pull: take the
   screenshot and variables, then deep-pull the component-set sublayer and record its node id.
 - `get_screenshot` URLs are short-lived: save `figma.png` in the same step.

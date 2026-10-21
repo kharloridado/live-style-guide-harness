@@ -3,7 +3,7 @@
  * Load order: the compiled OutSystems UI base, dist/theme.css (tokens + block overrides, the
  * ODC paste), then every src/blocks file again as its own sheet in src/blocks/index.css order,
  * then the specimen chrome. The per-file sheets repeat what theme.css already holds, in the same
- * order, so the cascade is unchanged — they exist so a probe can find `wf-input.css` by href and
+ * order, so the cascade is unchanged — they exist so a probe can find `<prefix>input.css` by href and
  * audit exactly the rules one file authors.
  *
  * A specimen may place `<!-- include: cmp-checkbox -->` anywhere: that item's specimen renders

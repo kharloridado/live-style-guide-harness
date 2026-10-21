@@ -31,7 +31,7 @@ Use exactly these values. Anything else and the register stops being greppable.
 | `filed` | Raised and opened as a GitHub bug; awaiting triage. The landing state for any gated finding. |
 | `resolved` | A human (designer or brand owner) ruled on it and the ruling needed **no code change** — the faithful build stands, or the cleanup lives in the design file. |
 | `resolved (code changed)` | A human ruled on it and the ruling **changed the code**. The row records the new spec and where it was applied. |
-| `withdrawn` | We raised it in error: the rule we cited was not actually a rule on this project (an unconfirmed convention, a misread spec). Ours to own, not the designer's. |
+| `withdrawn` | We raised it in error: the rule we cited was not actually a rule on this project (an unwritten convention, a misread spec). Ours to own, not the designer's. |
 | `closed (not reproduced)` | It survived initial suspicion but failed the adversarial challenge — audited against real rendered usage, the problem does not materialise. Register-only; any bug opened for it gets closed. |
 | `open (awaiting designer)` | Presented to the designer with measured options; no ruling yet. The only disposition that legitimately blocks a deliverable. |
 | `open (register-only, low)` | Real, but below the gate. Logged, not ticketed, not chased; batched into the next design-hygiene pass. |
@@ -42,21 +42,21 @@ Use exactly these values. Anything else and the register stops being greppable.
 **high** and **blocker** findings open issues and notify. **Medium** and **low** findings stay here in the
 register.
 
-That is deliberate, and it is what keeps the board from drowning. A real design library will generate
-dozens of low-severity token-naming and consistency observations; if every one becomes a board item, the
+That is deliberate, and it is what keeps the issue tracker from drowning. A real design library will generate
+dozens of low-severity token-naming and consistency observations; if every one becomes an issue, the
 two findings that genuinely block a release get lost among them. The register keeps them all; the gate
-keeps most of them off the board.
+keeps most of them out of the tracker.
 
 Raise the gate to `medium+` only if the customer has explicitly asked for medium findings to be triaged.
 
 ## Before you add a row
 
-Check the finding does not already exist — here, and on the board. Re-filing an existing finding under a
+Check the finding does not already exist — here, and in the repo's `finding` issues. Re-filing an existing finding under a
 new ID is the most common way this file goes wrong.
 
-Check it against `knownFalsePositiveClasses` in `project.config.json`, and against any convention marked
-`assumed` or `TBD`. **A convention that is not `confirmed` is not a rule, and nothing can be a finding
-against it.**
+Check it against `knownFalsePositiveClasses` in `project.config.json`. A spacing, grid or breakpoint
+rule that is not written in `specs/foundations/` or `specs/decisions.md` is not a rule, and nothing can
+be a finding against it.
 
 Every finding — raised or merely suspected — must survive a refutation against **real rendered usage**
 before it is filed. A colour that fails contrast as text is not a finding if nothing in the build ever

@@ -16,11 +16,7 @@ Everything in the copied document must be true of your project — replace `<<CU
 > against the surface it will actually sit on, before this document is sent.** Do not reach for the token
 > whose name sounds like the answer — "Emphasis", "Strong", "Dark" — and assume it passes. Compute it.
 >
-> A recommendation that also fails is worse than no recommendation at all. It burns the one thing this
-> document is buying you: the designer's confidence that the numbers in front of them are right. This has
-> happened — a plausible-looking "emphasis" token was recommended as the fix for a faint border, it in fact
-> reached only 2.53:1 against a 3:1 floor, and the correction had to be made **in front of the client**.
-> Recompute, and if a previously-circulated recommendation turns out to fail, carry the correction openly
+> A recommendation that also fails costs the designer's confidence in every number here. Recompute, and if a previously-circulated recommendation turns out to fail, carry the correction openly
 > in the document (see the callout pattern in section A below) rather than quietly swapping it.
 
 ---

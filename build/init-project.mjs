@@ -5,16 +5,6 @@
  * into project.config.json, and substitutes every <<PLACEHOLDER>> across the scaffold
  * docs. After this runs, `npm run check:config` passes and the build works.
  *
- * The whole point: you answer each question exactly once. The previous template made
- * you hand-edit the same value into several files, which is how it ended up shipping a
- * class prefix that two config files disagreed about for the life of the project.
- *
- * Note the deliberate refusal to guess. Conventions (spacing base, grid, breakpoints,
- * default size) default to status "TBD" — NOT to a plausible value. An unverified
- * convention that looks confirmed is worse than an obviously empty one: the loop will
- * enforce it, flag every value that "violates" it, and hand a human a queue of findings
- * that get closed as not-planned.
- *
  * Usage:  npm run init   (re-runnable; shows current values as defaults) */
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -59,6 +49,9 @@ Answer once — these values are written everywhere they are needed.
 `);
 
 const cfg = JSON.parse(readFileSync(CONFIG, "utf8"));
+/* First run on a fresh copy of the template: its release notes and version are the template's,
+ * not this project's, and are reset below. */
+const firstRun = JSON.stringify(cfg).includes("<<");
 const has = (v) => v && !/^<<.*>>$/.test(v);
 
 const customer = await ask("Customer (e.g. Acme Corp)", has(cfg.customer) ? cfg.customer : "", "customer");
@@ -114,37 +107,6 @@ if (odcTenant && !/^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/.test(odcTenant)) {
   );
 }
 
-/* Board-driven mode is opt-in: leave the URL blank and the loop runs from the signed
- * inventory in loop/goal.md instead. Both owner and number come from the same URL, so
- * ask for the URL once rather than making you retype the owner. */
-const boardUrl = await ask(
-  "GitHub Project board URL (blank = drive the loop from loop/goal.md instead)",
-  cfg.board?.url ?? "",
-  "board-url"
-);
-const boardMatch = boardUrl.match(/github\.com\/(?:users|orgs)\/([^/]+)\/projects\/(\d+)/);
-if (boardUrl && !boardMatch) {
-  throw new Error(
-    `Could not parse "${boardUrl}".\n` +
-      `Expected https://github.com/users/<owner>/projects/<number> or .../orgs/<owner>/projects/<number>.`
-  );
-}
-const boardOwner = boardMatch?.[1] ?? null;
-const boardNumber = boardMatch ? Number(boardMatch[2]) : null;
-/* `owners` gates whose card comments are read as spec — everything else on a card is
- * untrusted input. Default it to the board owner so board mode is never left with an
- * empty allow-list (check:config rejects that), but it is meant to be widened by hand. */
-const boardOwners = boardOwner
-  ? (cfg.board?.owners?.length ? cfg.board.owners : [boardOwner])
-  : [];
-
-console.log(`
-Conventions (spacing base, grid, breakpoints, default component size) start as "TBD"
-on purpose. Do NOT guess them. Promote one to "confirmed" in project.config.json only
-once the designer or brand owner has actually confirmed it — the checker enforces a
-convention only when it is confirmed, and raises findings against it only then.
-`);
-
 Object.assign(cfg, {
   customer, project,
   designSystemName: dsName,
@@ -156,13 +118,6 @@ Object.assign(cfg, {
   odcTenant: environment === "O11" ? null : odcTenant || "<<ODC_TENANT>>",
   repo,
   figma: { fileKey: figmaKey || "<<FIGMA_FILE_KEY>>", url: figmaUrl || "<<FIGMA_URL>>" },
-  board: {
-    ...cfg.board,
-    owner: boardOwner,
-    number: boardNumber,
-    url: boardUrl || null,
-    owners: boardOwners,
-  },
 });
 cfg.findings.ticketTarget = repo;
 writeFileSync(CONFIG, JSON.stringify(cfg, null, 2) + "\n");
@@ -220,6 +175,25 @@ function substitute(path) {
 }
 for (const d of SCAN_DIRS) { const p = join(root, d); if (existsSync(p)) walk(p); }
 
+if (firstRun) {
+  const CHANGELOG = join(root, "CHANGELOG.md");
+  if (existsSync(CHANGELOG)) {
+    const log = readFileSync(CHANGELOG, "utf8");
+    const head = log.slice(0, log.search(/^## \[/m) === -1 ? log.length : log.search(/^## \[/m));
+    writeFileSync(CHANGELOG, head.trimEnd() + "\n\n## [Unreleased]\n");
+    console.log("  reset CHANGELOG.md — the template's release notes are not this project's");
+  }
+  for (const f of ["package.json", "package-lock.json"]) {
+    const path = join(root, f);
+    if (!existsSync(path)) continue;
+    const json = JSON.parse(readFileSync(path, "utf8"));
+    json.version = "0.0.0";
+    if (json.packages?.[""]) json.packages[""].version = "0.0.0";
+    writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
+  }
+  console.log("  version reset to 0.0.0 — the first `npm run release -- minor` makes it 0.1.0");
+}
+
 await rl?.close();
 console.log(`
 Done — ${touched} file(s) updated.
@@ -228,13 +202,7 @@ Next:
   1. npm run check:config        # must pass; it is part of the build gate
   2. git submodule update --init # vendor/outsystems-ui — then pin it to your ODC env's version
   3. ./.github/setup-finding-labels.sh ${repo || "<owner/repo>"}
-  4. gh auth refresh -s project   # one-time scope, required for any board command
-  5. ${boardOwner
-       ? `board #${boardNumber} is already configured — if it predates the 8-lane gate, run:\n     ./.github/migrate-project-status.sh ${boardOwner} ${boardNumber} --confirm`
-       : `./.github/setup-project.sh  <owner> ${repo || "<owner/repo>"} "Design System v1"\n     (then re-run \`npm run init\` with the board URL to enable board-driven mode)`}
-  6. write specs/foundations/ from the brand guidelines, and log the Figma nodes in loop/figma-links.md
-  7. set the goal in loop/goal.md${boardOwner
-       ? " (Inventory source = board — the board is the queue)"
-       : " + the SIGNED-OFF component inventory"}
-  8. ${boardOwner ? "npm run board:advance   # or /outsystems-loop:board-advance" : "/outsystems-loop:design-loop"}
+  4. write specs/foundations/ from the brand guidelines
+  5. fill loop/goal.md: the goal + the SIGNED-OFF component inventory
+  6. /lsg:design-loop
 `);

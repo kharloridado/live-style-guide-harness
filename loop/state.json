@@ -1,44 +1,6 @@
 {
-  "_schema_note": "The loop's durable memory, and A CACHE — never an authority. The board owns intent, the repository owns content, this file owns nothing; reconcile it against both before advancing (the design-loop and board-sync skills in the outsystems-loop plugin say how). Empty skeleton: fill from loop/goal.md on the first run. Item and finding shapes are documented in the plugin's design-loop skill. Items carry `review_url` (their review Artifact); `library_review_url` is the library page. `tiers` is a PROJECT-CONFIGURABLE list, not a fixed taxonomy — add or rename tiers to match this project's dependency graph, and keep `current_tier` pointing at one of them. The board POINTER is deliberately not here: it is a project value and lives in project.config.json -> board. Only DERIVED board ids are cached here, in board_cache.",
-
-  "goal": "",
+  "_schema_note": "An index of build items and the findings they raised — a cache, never an authority: git and GitHub own what was built and merged. Narrative (decision logs, evidence, round-by-round critique) goes in the PR body or the item's ref.md, never here. items[]: { id, tier, level, node, status, pr_url, review_url, handover_issue, rounds, risk_tier, det_gate, visual, pr_error? }, status one of queued | built | ready-for-review | merged | handover | needs-human | needs-re-ref | deferred | closed. findings[]: { id (FND-NNN or \"UNALLOCATED\"), item, class, severity, status, summary, disposition }. `npm run check:state` checks it.",
   "library_review_url": null,
-  "figma_url": "<<FIGMA_URL>>",
-  "figma_file_key": "<<FIGMA_FILE_KEY>>",
-  "branch": "",
-  "status": "pending",
-  "mode": "single",
-  "phase": "",
-
-  "repo": "<<OWNER/REPO>>",
-
-  "board_cache": {
-    "_note": "Derived ids only, refreshed on a miss. An id that stops resolving means someone recreated a field, not that the card vanished. The board's owner/number live in project.config.json -> board.",
-    "project_id": "",
-    "field_ids": {},
-    "option_ids": {},
-    "fetched_at": ""
-  },
-
-  "caps": {
-    "max_rounds_per_item": 3,
-    "max_global_iterations": 500,
-    "budget_note": "raise/lower for library-scale runs; a full library is hundreds of items"
-  },
-
-  "checkpoints": {
-    "after_tokens": "pause",
-    "after_primitives": "pause",
-    "after_composites": "continue"
-  },
-
-  "iteration": 0,
-
-  "tiers": ["foundations", "primitives", "composites", "patterns"],
-  "current_tier": "foundations",
-
   "items": [],
-  "findings": [],
-  "handover_epics": [],
-  "consistency_passes": []
+  "findings": []
 }

@@ -1,11 +1,8 @@
 # Vendored assets — licensing policy
 
 `vendor/` holds third-party material we build **on top of** and never edit: the OutSystems UI
-submodule, provider libraries used by the preview, and — on projects that need one — a licensed
+submodule, the OutSystems frontend-skills pack, and — on projects that need one — a licensed
 icon font.
-
-The rules below are not bureaucracy. Each one is here because breaking it has a concrete
-failure mode.
 
 ## 1. Commit the scripts. Do not commit the licensed assets.
 
@@ -30,7 +27,7 @@ scripts are written against a specific one.
 A vendor metadata JSON containing every glyph's path data can be **hundreds of megabytes**.
 GitHub rejects any single file over **100 MB** at push time (and warns above 50 MB), so a commit
 containing one is not merely a licence problem: the push fails, and the "fix" is a rewrite of
-history rather than a revert. This has already happened once on a real project.
+history rather than a revert.
 
 Keep those files out of the repo from the start — gitignore the paths, do not rely on
 remembering.

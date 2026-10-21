@@ -1,6 +1,5 @@
 /* @section Spacing / Scale */
 /* spacing.css — the framework's spacing steps this design changes, and nothing else. An empty
- * file is the expected shape when the design matches the framework's scale. Never declare a base
- * grid here: that is a convention, recorded three-state in project.config.json. */
+ * file is the expected shape when the design matches the framework's scale. */
 :root {
 }

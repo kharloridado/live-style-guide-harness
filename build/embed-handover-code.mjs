@@ -21,10 +21,8 @@
  * `mentor: { text: "…" }` is the escape hatch: the prompt is taken VERBATIM from the map.
  * `mentor: { prompts: [{ title, text }, …] }` renders several verbatim prompts, one subsection each,
  * for a change that spans modules (the theme module first, then each consumer app).
- * It exists because the derived prompts each describe one archetype, and a component whose
- * ODC side is a hand-built Block of native widgets — inputs, events, a Client Action — is
- * none of them. Without it the only way to keep such a prompt is to hand-edit the handover,
- * which this script then overwrites on its next run.
+ * Use it for a component that fits none of the derived archetypes (e.g. a hand-built Block of
+ * native widgets with inputs, events and a Client Action).
  *
  * Usage: node build/embed-handover-code.mjs */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -40,17 +38,8 @@ const MARKER = "## Code to paste into ODC";
 const WIRING_MARKER = "## Event wiring (OnReady / OnDestroy)";
 const MENTOR_MARKER = "## Build in ODC with Mentor Studio";
 
-/* md file → the artifact(s) a developer hand-places into ODC, plus an optional `mentor`
- * spec for a fully-filled Mentor Studio prompt. Tokens travel via dist/theme.css (already
- * its own paste) so they are not duplicated here. */
-/* The map lives in DATA, not in this script: handover/handover-map.json.
- * md file → the artifact(s) a developer hand-places into ODC, plus an optional `mentor`
- * spec for a fully-filled Mentor Studio prompt. Tokens travel via dist/theme.css (already
- * its own paste) so they are not duplicated here.
- *
- * It used to be a 33-entry literal in this file, keyed by one project's component names —
- * which meant the next project inherited another customer's component list inside a build
- * script. Add your components to the JSON; leave the engine alone. */
+/* handover/handover-map.json: md file → the artifact(s) a developer places into ODC, plus an
+ * optional `mentor` spec. Tokens travel via dist/theme.css, so they are not listed. */
 const MAP = JSON.parse(readFileSync(join(handoverDir, "handover-map.json"), "utf8"));
 
 /* ── "## Code to paste into ODC" ─────────────────────────────────────────────── */
@@ -104,7 +93,7 @@ function raiseParam([, , detail, param]) {
   return detail ? (param || "Value") : null;
 }
 
-// "wf-" → "__wfHandlers"; hyphenated prefixes camel-case ("acme-ds-" → "__acmeDsHandlers").
+// "acme-" → "__acmeHandlers"; hyphenated prefixes camel-case ("acme-ds-" → "__acmeDsHandlers").
 const HANDLERS = "__" + P.split("-").filter(Boolean)
   .map((s, i) => (i ? s.charAt(0).toUpperCase() + s.slice(1) : s)).join("") + "Handlers";
 
@@ -565,6 +554,7 @@ let changed = 0;
 for (const [md, raw] of Object.entries(MAP)) {
   if (md.startsWith("$")) continue; // $comment — documentation inside the data file, not an entry
   const entry = Array.isArray(raw) ? { files: raw } : raw;
+  if (!entry.files?.length && !entry.mentor) continue; // `[]` — a prose handover with no code to embed
   const path = join(handoverDir, md);
   let text;
   try { text = readFileSync(path, "utf8"); } catch { console.warn(`skip (missing): ${md}`); continue; }

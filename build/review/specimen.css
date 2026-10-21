@@ -12,10 +12,8 @@
  * framework's names (--font-size-h1…h6 / display / base / s / xs / label, --space-xs…xxl). */
 
 body {
-  /* No font-family and no line-height here on purpose. `html` carries the family (set by
-   * the theme from the project font-family token) and the framework's own `body` rule carries
-   * line-height: 1.5 — both inherit correctly. Restating either from chrome overrode the
-   * real cascade with an invalid value and hid the very thing the page exists to show. */
+  /* No font-family or line-height: the theme and the framework set both, and the page
+   * exists to show that cascade. */
   margin: 0;
 }
 
@@ -27,8 +25,7 @@ body {
 
 .<<CLASS_PREFIX>>specimen__head h1 {
   /* No font-size: the framework's own `h1` rule (var(--font-size-h1), 32px) is correct and
-   * is what the gate's `h1` probe is there to measure. The scaffold's --font-size-xl that
-   * used to sit here no longer exists. */
+   * is what the gate's `h1` probe is there to measure. */
   margin: 0 0 var(--space-xs);
 }
 

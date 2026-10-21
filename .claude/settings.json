@@ -7,13 +7,9 @@
       "Grep",
       "Glob",
       "Bash(node build/*)",
-      "Bash(npm run check:config)",
-      "Bash(npm run build:theme)",
-      "Bash(npm run build:theme:ship)",
-      "Bash(npm run build:osui)",
-      "Bash(npm run gen:*)",
-      "Bash(npm run embed:handover)",
-      "Bash(npm run board:*)",
+      "Bash(npm run *)",
+      "Bash(npm install)",
+      "Bash(npm ci)",
       "Bash(jq *)",
       "Bash(git add *)",
       "Bash(git commit *)",
@@ -28,6 +24,7 @@
       "Bash(git worktree *)",
       "Bash(git rev-parse *)",
       "Bash(git merge-base *)",
+      "Bash(git submodule *)",
       "Bash(gh issue create *)",
       "Bash(gh issue edit *)",
       "Bash(gh issue view *)",
@@ -38,14 +35,7 @@
       "Bash(gh pr create *)",
       "Bash(gh pr view *)",
       "Bash(gh pr list *)",
-      "Bash(gh pr merge *)",
-      "Bash(gh project view *)",
-      "Bash(gh project item-list *)",
-      "Bash(gh project item-edit *)",
-      "Bash(gh project item-add *)",
-      "Bash(gh project field-list *)",
-      "Bash(gh api graphql *)",
-      "Bash(gh api repos/*)",
+      "Bash(gh pr edit *)",
       "Bash(cat *)",
       "Bash(ls *)"
     ],
@@ -54,71 +44,31 @@
       "Bash(git push --force *)",
       "Bash(git reset --hard *)",
       "Bash(gh repo delete *)",
-      "Bash(gh project delete *)",
-      "Bash(gh project field-delete *)",
       "Bash(gh pr merge --admin *)",
       "Bash(gh api -X DELETE *)",
       "Bash(gh api --method DELETE *)"
     ],
-    "defaultMode": "acceptEdits",
-    "$denyComment": [
-      "A BACKSTOP, not the policy — the allow-list above is the policy. Deny patterns are",
-      "matched against the start of the command, so a flag that appears mid-command is NOT",
-      "reliably caught: `gh pr merge 12 --admin` very likely does not match the --admin rule",
-      "below. The real control for that one is the explicit 'never --admin' instruction in",
-      "the board-ship skill; the rule here only catches the flag-first spelling."
-    ]
-  },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"$(date -u +%FT%TZ) artifact edit\" >> loop/loop.log"
-          }
-        ]
-      }
-    ]
+    "defaultMode": "acceptEdits"
   },
   "enabledPlugins": {
-    "outsystems-loop@outsystems-loop": true,
+    "lsg@live-style-guide-loop": true,
     "outsystems@outsystems": true
   },
   "$comment": [
-    "The allow-list is what lets the unattended loop (loop/run.sh) run WITHOUT",
-    "--dangerously-skip-permissions. Keep it tight and explicit rather than widening it;",
-    "the deny-list is a backstop, not the policy.",
+    "The allow-list lets an unattended run work without --dangerously-skip-permissions; the",
+    "deny-list is a backstop (patterns match the start of a command only).",
     "",
-    "defaultMode 'acceptEdits' is a deliberate autonomy choice for the loop: file edits apply",
-    "without a prompt, but every Bash/gh call still has to match the allow-list. Remove it if",
-    "you would rather approve each edit.",
+    "`gh pr merge` is deliberately absent: merging is the human's approval, so it always prompts.",
     "",
-    "The skills and the maker/checker agents are NOT here any more — they are the outsystems-loop",
-    "plugin, so improvements reach every project instead of being copied once and going stale:",
-    "  /plugin marketplace add kharloridado/outsystems-loop",
-    "  /plugin install outsystems-loop@outsystems-loop --scope project",
-    "",
-    "Board-driven mode needed four widenings, each with a reason:",
-    "  gh api graphql  — Projects v2 has no `gh project` command for converting a draft item",
-    "                    to a real issue, and single-select option ids may not be exposed by",
-    "                    `gh project field-list --format json`. Both need raw GraphQL.",
-    "  gh api repos/*  — to resolve a repository node id for that conversion. Read-only.",
-    "  gh pr *         — board-ship opens and squash-merges the PR for an Approved card.",
-    "  git worktree    — every routine builds in its own worktree so it cannot race an",
-    "                    interactive session (loop/LESSONS.md §2.3).",
-    "",
-    "And one TIGHTENING: `Bash(gh project *)` used to be a blanket grant, which also",
-    "permitted `gh project delete` and `gh project field-delete` unattended — the two",
-    "commands that can destroy the board. It is now enumerated by subcommand. Changing the",
-    "board's lanes is a deliberate human act behind ./.github/migrate-project-status.sh."
+    "Skills, the maker/checker agents and the build-before-commit hook come from the lsg plugin:",
+    "  /plugin marketplace add kharloridado/live-style-guide-loop",
+    "  /plugin install lsg@live-style-guide-loop --scope project"
   ],
   "extraKnownMarketplaces": {
-    "outsystems-loop": {
+    "live-style-guide-loop": {
       "source": {
         "source": "github",
-        "repo": "kharloridado/outsystems-loop"
+        "repo": "kharloridado/live-style-guide-loop"
       }
     },
     "outsystems": {

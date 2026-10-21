@@ -9,7 +9,7 @@
  *   warning  a raw duration, or a length on a property with no token scale (width, height…)
  *
  * A literal the design demands and no token holds is built as drawn and raised as a finding
- * (hard rules 3 and 4). A comment naming that finding (FND-016) or the frozen-ref section that
+ * (CLAUDE.md). A comment naming that finding (FND-NNN) or the frozen-ref section that
  * authorises the literal (ref §2) acknowledges it — on the same line, directly above the
  * declaration, or directly above the rule. The audit lists it but does not fail. A literal
  * inside a var() fallback is allowed.

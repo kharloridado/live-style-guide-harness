@@ -4,8 +4,6 @@
  * Sectioning follows the OutSystems UI convention (see ODC.OutSystemsUI.scss):
  * a `/*!` header, a numbered "Section Index", and `/*! ===…=== *\/` banners per
  * section. `!` marks the comments as important so they survive minification.
- * (Decided 2026-06-17: match OutSystems UI's simple style — NOT inuitcss
- * `#SECTION` banners or dot-leader contents.)
  *
  * Comment-PRESERVING by design: lightningcss strips every comment, which leaves
  * the pasted ODC theme an unreadable wall of variables. This build keeps the
@@ -14,8 +12,7 @@
  * `--ship` (customer deliverable): strips the ordinary `/* … *\/` provenance and
  * finding notes but KEEPS the `/*!` important comments — the head, the Section
  * Index, and the per-section banners. The pasted ODC theme stays navigable
- * (TOC + sectioning) without the internal working notes. NOT flat/comment-stripped
- * (see CLAUDE.md rule): the sectioning + table of contents always survive.
+ * (TOC + sectioning) without the internal working notes.
  *
  * SINGLE :root — every token file declares its own `:root { … }`; concatenating
  * them verbatim would emit many `:root` blocks. Instead we lift each file's
@@ -34,10 +31,7 @@ const tokensDir = join(root, "tokens");
 const blocksDir = join(root, "src", "blocks");
 const outFile = join(root, "dist", "theme.css");
 
-/* The release version stamped at the top of dist/theme.css comes from package.json
- * — its single source of truth. Bumping a release = editing package.json "version"
- * (see CLAUDE.md, "Releasing"), then rebuilding so the pasted ODC theme self-identifies and
- * matches the CHANGELOG.md entry. */
+/* The version stamped at the top of dist/theme.css; set by `npm run release`. */
 const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
 
 /* Per-file section metadata — SELF-DECLARED, read from the file itself.
@@ -49,12 +43,7 @@ const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).ver
  *      ^ group ── ^ name (optional; omit for a single-file group)
  *
  * `group` clusters files under one top-level number; `name` is the sub-entry when a
- * group holds more than one file.
- *
- * Deliberately NOT a lookup table in this script. The previous version kept a `META`
- * map here, which meant every new token file had to be registered in TWO places —
- * `tokens/index.css` AND this table — and half-doing it silently dropped the file from
- * the theme's table of contents. One file, one declaration, one place to forget nothing. */
+ * group holds more than one file. Self-declared so a new file needs no registration here. */
 const SECTION_RE = /@section\s+([^\n*/]+?)\s*(?:\/\s*([^\n*/]+?))?\s*(?:\*\/|\n)/;
 const metaCache = new Map();
 
@@ -214,7 +203,7 @@ function firstRuleBrace(s) {
  * its `{`), found by brace-counting and skipping `/* … *\/` comments. Returns -1
  * if unbalanced. Must NOT assume it's the file's last `}` — a file may carry
  * trailing top-level rules after its :root (e.g. typography.css's `html, body` +
- * `body.phone` responsive blocks). See the 2026-06-30 responsive-scope fix. */
+ * `body.phone` responsive blocks). */
 function matchingBrace(s, open) {
   let depth = 0;
   for (let i = open; i < s.length; i++) {
@@ -240,19 +229,19 @@ function matchingBrace(s, open) {
  * rules). It must stay at TOP LEVEL — nesting an at-rule like @font-face inside the
  * consolidated :root is invalid CSS and silently breaks every token below it. When
  * the preamble contains a rule (a brace outside comments) we hoist the whole
- * pre-:root chunk out rather than folding it inside. See the 2026-06-25 font-face fix.
+ * pre-:root chunk out rather than folding it inside.
  *
  * `trailing`: real CSS that sits AFTER the `:root` close (e.g. typography.css's
  * `html, body` base rule + `body.tablet`/`body.phone` responsive overrides). Like
  * `hoist`, it must stay TOP LEVEL — folding it into the consolidated :root nests the
  * downstream component tokens inside `body.phone`, so they only apply on phones.
- * See the 2026-06-30 responsive-scope fix. */
+ * */
 function splitRoot(body) {
   // Match `:root {` as an actual SELECTOR (optional whitespace before the brace),
   // not the bare word ":root" — a class-only override file may mention ":root" in
   // its prose comments (e.g. "which only retints the :root --color-* vars"), and a
   // naive indexOf(":root") would mis-slice it into the consolidated :root block,
-  // leaving it unclosed and breaking every token. See the 2026-06-22 alert restyle.
+  // leaving it unclosed and breaking every token.
   const m = /:root\s*\{/.exec(body);
   if (!m) return { preamble: "", hoist: "", inner: null, trailing: "" };
   const open = m.index + m[0].length - 1; // position of the matched `{`
