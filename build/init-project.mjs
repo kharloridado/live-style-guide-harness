@@ -163,7 +163,8 @@ if (odcTenant) {
   writeFileSync(MCP, JSON.stringify(mcp, null, 2) + "\n");
   console.log(`  wrote .mcp.json → https://${odcTenant}/mcp`);
 } else if (environment === "O11") {
-  console.log("  .mcp.json not written on O11 — there is no tenant endpoint; handovers carry Service Studio steps.");
+  console.log("  .mcp.json not written on O11 — the MCP is Service Studio's own, set up on each machine.");
+  console.log("  Without it, handovers carry Service Studio steps.");
 } else if (noMcp) {
   console.log("  .mcp.json not written — no MCP access recorded; handovers carry Mentor prompts.");
 } else {
