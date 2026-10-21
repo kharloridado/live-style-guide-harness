@@ -157,6 +157,8 @@ it). Read the names from there; this table only says what each role holds.
 
 ### How work reaches the modules
 
+Only merged work, and only after the merge: `/lsg:deliver` takes the first channel available.
+
 1. **The OutSystems MCP server, whenever one is connected.** On ODC that is the tenant's own
    endpoint, `https://<odcTenant>/mcp`, written to `.mcp.json` by `npm run init`;
    `check:config` fails if the two drift. On O11 it is Service Studio's own MCP server, configured
