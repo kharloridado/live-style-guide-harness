@@ -17,7 +17,7 @@
   },
 
   "platformKnowledge": {
-    "$comment": "OutSystems' own frontend-skills pack at vendor/outsystems-frontend-skills. Every skill in the outsystems-loop plugin reads platform facts (block names, arguments, CSS variables, utility classes, WCAG-to-widget mapping) from there instead of carrying its own copy — see ARCHITECTURE.md in that plugin. `mode` is `vendored-copy` while we lack access to the upstream repo, and `submodule` once we have it; the path does not change either way. A `vendored-copy` has no commit and cannot be diffed against upstream, so it is a stopgap with a cost, not a choice — see vendor/outsystems-frontend-skills/VENDORED.md.",
+    "$comment": "OutSystems' own frontend-skills pack at vendor/outsystems-frontend-skills. Every skill in the lsg plugin reads platform facts (block names, arguments, CSS variables, utility classes, WCAG-to-widget mapping) from there instead of carrying its own copy — see ARCHITECTURE.md in that plugin. `mode` is `vendored-copy` while we lack access to the upstream repo, and `submodule` once we have it; the path does not change either way. A `vendored-copy` has no commit and cannot be diffed against upstream, so it is a stopgap with a cost, not a choice — see vendor/outsystems-frontend-skills/VENDORED.md.",
     "mode": "vendored-copy",
     "repo": null,
     "pin": null,

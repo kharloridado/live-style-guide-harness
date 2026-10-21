@@ -30,7 +30,7 @@
  *
  * There is deliberately NO --update flag. A baseline is a judged artifact; refreshing
  * one without re-judging would launder an unreviewed change into the record. If a
- * token change is intentional, re-judge the item with /outsystems-loop:revalidate.
+ * token change is intentional, re-judge the item with /lsg:revalidate.
  *
  * Exit codes:
  *   0  no regressions (informational geometry drift is allowed)

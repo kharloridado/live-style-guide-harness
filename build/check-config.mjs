@@ -65,7 +65,7 @@ for (const [name, c] of Object.entries(cfg.conventions ?? {})) {
 }
 
 /* ---- 4b. the platform-knowledge pack must actually be on disk ------------------- */
-/* The outsystems-loop skills hold no OutSystems platform knowledge — no block catalog, no
+/* The lsg plugin's skills hold no OutSystems platform knowledge — no block catalog, no
  * variable list, no widget conventions. They read all of it from here at runtime. When this
  * is missing the loop does NOT stop: the audit classifies from memory, invents blocks that
  * do not exist, routes work to L5 that the framework already ships, and the checker cannot
@@ -94,7 +94,7 @@ if (!existsSync(PK_ROOT)) {
 if (!["submodule", "vendored-copy"].includes(pk.mode)) {
   errors.push(
     `platformKnowledge.mode is ${JSON.stringify(pk.mode)} — must be "submodule" or ` +
-    `"vendored-copy". See ARCHITECTURE.md in the outsystems-loop plugin.`
+    `"vendored-copy". See ARCHITECTURE.md in the lsg plugin (live-style-guide-loop).`
   );
 }
 if (pk.mode === "submodule" && !pk.repo) {

@@ -6,7 +6,7 @@ Two deterministic Node scripts. They **measure and diff**; they never judge.
 |---|---|---|---|
 | Build time | *Is this right?* — the render vs the frozen Figma ref | the checker (an agent) | once per item |
 | Every push | *Did this change?* — vs the committed baseline | `compare-measurements.mjs` | free, forever |
-| On demand | *Is this still right?* — re-judge, no rebuild | `/outsystems-loop:revalidate` | when asked |
+| On demand | *Is this still right?* — re-judge, no rebuild | `/lsg:revalidate` | when asked |
 
 ## Why these live in the template and not in the plugin
 
@@ -154,7 +154,7 @@ regression too.
 
 A baseline is a **judged** artifact. Refreshing one without re-judging would launder an
 unreviewed change into the record. If a token change is intentional, re-judge the item with
-`/outsystems-loop:revalidate`.
+`/lsg:revalidate`.
 
 ## `npm run gate:selftest`
 

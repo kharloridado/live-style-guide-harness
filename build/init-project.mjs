@@ -199,5 +199,5 @@ Next:
   3. ./.github/setup-finding-labels.sh ${repo || "<owner/repo>"}
   4. write specs/foundations/ from the brand guidelines
   5. fill loop/goal.md: the goal + the SIGNED-OFF component inventory
-  6. /outsystems-loop:design-loop
+  6. /lsg:design-loop
 `);

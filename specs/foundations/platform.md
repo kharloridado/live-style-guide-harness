@@ -174,7 +174,7 @@ time because it was written against the SCSS rather than the DOM the provider ac
 
 ## This project's ODC environment
 
-Fill in at kickoff (`/outsystems-loop:project-setup` asks for it). The tenant itself is
+Fill in at kickoff (`/lsg:project-setup` asks for it). The tenant itself is
 `odcTenant` in `project.config.json`; `.mcp.json` must name the same tenant, and
 `npm run check:config` fails if they drift.
 

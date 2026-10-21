@@ -1,6 +1,6 @@
 # Loop goal — <<DESIGN_SYSTEM_NAME>>
 
-The scope contract for `/outsystems-loop:design-loop` when it works through a queue (a full
+The scope contract for `/lsg:design-loop` when it works through a queue (a full
 library, or a batch of components). A one-off request in a session ("build the error state for the
 input") does not need this file: the request plus a frozen ref is the scope.
 

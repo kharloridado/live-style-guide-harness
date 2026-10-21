@@ -4,13 +4,13 @@ A map, not a manual: the rules below are the ones no script enforces; everything
 Project **values** (class prefix, JS namespace, design-system name, ODC theme module, tenant, repo,
 Figma file, findings routing, conventions) live in [`project.config.json`](./project.config.json)
 and nowhere else — read it, never restate a value from it. Behaviour (skills, `maker` / `checker`,
-hooks) is the versioned **`outsystems-loop`** plugin; fix the plugin, not a local copy.
+hooks) is the versioned **`lsg`** plugin ([live-style-guide-loop](https://github.com/kharloridado/live-style-guide-loop)); fix the plugin, not a local copy.
 
 ## How work happens
 
 1. A request in a session — "add the error state to the input" — on its own branch.
-2. `/outsystems-loop:design-loop` freezes the ref, runs `@outsystems-loop:maker` then
-   `@outsystems-loop:checker`, and opens **one PR** with its review Artifact. Larger scopes run
+2. `/lsg:design-loop` freezes the ref, runs `@lsg:maker` then
+   `@lsg:checker`, and opens **one PR** with its review Artifact. Larger scopes run
    from the signed inventory in `loop/goal.md`.
 3. A human reviews the Artifact and merges. **Merging is the approval** — never merge your own PR.
 4. After the merge: the handover issue, then `npm run release` when there is something to ship.
@@ -80,7 +80,7 @@ Every build ends in one: the frozen Figma frame beside the live specimen, the me
 the judged baseline, the item's findings, and the code to paste. Republish the same item to the
 same URL (`loop/state.json` → `items[].review_url`) so versions stack, and link it in the PR and
 the handover. A baseline (`measurements.json`) is judged: never refresh one without re-judging
-(`/outsystems-loop:revalidate`).
+(`/lsg:revalidate`).
 
 ## Findings and handovers
 

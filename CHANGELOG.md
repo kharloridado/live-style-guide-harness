@@ -61,6 +61,10 @@ then clear what `check:state` now warns about.
 
 ### Changed
 
+- **Renamed to Live Style Guide Harness**, and its plugin to `lsg` (repo `live-style-guide-loop`).
+  Commands are `/lsg:design-loop`, `@lsg:maker`, `@lsg:checker`. In an existing project, set
+  `.claude/settings.json` → `enabledPlugins` to `"lsg@live-style-guide-loop": true` and point the
+  `extraKnownMarketplaces` entry `live-style-guide-loop` at `kharloridado/live-style-guide-loop`.
 - **CLAUDE.md is a map, not a manual** — 219 → ~115 lines, built around the real workflow: a
   request in a session → one PR with its review Artifact → a human merges → handover → release.
 - **`loop/state.json` is an index** — items and findings only, with a fixed field list. Run
