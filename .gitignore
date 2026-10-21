@@ -3,11 +3,6 @@ dist/
 *.log
 .DS_Store
 
-# Board-driven mode: each routine run builds in a throwaway git worktree, and takes a
-# mkdir-based lock so a cron run and an interactive session cannot race (loop/LESSONS.md §2.3).
-.board-worktrees/
-loop/.board-*.lock
-
 # Session-approved, machine-specific permissions — never share these.
 .claude/settings.local.json
 

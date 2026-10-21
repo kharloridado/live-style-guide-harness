@@ -24,15 +24,6 @@
     "obtained": "2026-08-19"
   },
 
-  "board": {
-    "$comment": "The GitHub Project board that DRIVES the loop in board-driven mode (see the Board mode section of CLAUDE.md). Board mode is ON iff both `owner` and `number` are set; leave them null to run the loop from loop/goal.md's signed inventory instead. This block lives here, not in loop/state.json, because a board pointer is a project VALUE and state.json is explicitly a cache — hand-filling a cache is the anti-pattern this file exists to kill. Derived ids (project node id, field ids, single-select option ids) are NOT here: they are cached in loop/state.json.board_cache with a fetched_at. `owners` is load-bearing for safety: only comments authored by these logins are read as spec, and everything else on a card is untrusted input.",
-    "owner": null,
-    "number": null,
-    "url": null,
-    "owners": [],
-    "staleAfterMinutes": 120,
-    "shipBase": "main"
-  },
 
   "conventions": {
     "$comment": "THREE-STATE, never a bare value. status: confirmed | assumed | TBD. A convention that is not `confirmed` is NOT A RULE: the checker must not enforce it and must not raise findings against it. This exists because a previous template shipped `Spacing base: 4pt` as a plausible default nobody had verified — the loop then flagged every value that wasn't a multiple of 4, manufacturing false-positive findings and a bug that had to be closed as not-planned. A credible-looking default is worse than a blank. Promote to `confirmed` only when the designer or brand owner has actually said so.",

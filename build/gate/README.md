@@ -80,14 +80,14 @@ in the harness, so the fallback face was "the same face the harness has always m
 baseline still described the rendered page. That reasoning was wrong in a way worth recording: it
 made the harness measure a typeface **the product does not ship**, and the damage was not
 hypothetical — `cmp-link`'s font-metric probe had to be recorded `status: "unmeasured"` because its
-value depended on whether the runner had network egress to Google at measure time (`loop/LESSONS.md` §2.8),
+value depended on whether the runner had network egress to Google at measure time (`build/gate/LESSONS.md` §2.8),
 and a `pat-wizard` geometry baseline was captured under Arial metrics and read as a regression the
 moment Roboto arrived.
 
 So `build/lib/virtual-origin.mjs` maps the `/<odcThemeModule>/` prefix (read from
 `project.config.json`) onto the committed faces in `vendor/fonts/roboto/`. One authored path
 resolves in **both** contexts: `dist/theme.css` stays byte-identical to what is pasted into ODC,
-and the harness measures the face the product actually renders. That is what `loop/LESSONS.md` §2.8 means by
+and the harness measures the face the product actually renders. That is what `build/gate/LESSONS.md` §2.8 means by
 "re-arm it by making the font deterministic, then re-judge".
 
 The exemption stays for the cases the alias does not cover — a project that has not yet committed

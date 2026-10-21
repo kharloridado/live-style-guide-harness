@@ -162,7 +162,7 @@ The traps, all hit on this project:
 - **Published ODC pages load a stylesheet neither vendored source contains: `OutSystemsReactWidgets`.**
   It declares its own `[data-checkbox]::before` (`display: table`, full size, a `#bdc5c7` background,
   `opacity: 0 → 1` on `:checked`). It sits below OutSystems UI and the theme in the cascade, so our
-  declarations win, but it is live on every page — see `loop/LESSONS.md` §2.13.
+  declarations win, but it is live on every page — see `build/gate/LESSONS.md` §2.13.
 - **The platform wraps the Checkbox input in a bare `<span>` and gives it `class="checkbox"` as well as
   `data-checkbox`.** The span breaks any layout that assumes the input is a direct flex child;
   a restyle is safe only when it positions the input absolutely or selects it as a descendant.

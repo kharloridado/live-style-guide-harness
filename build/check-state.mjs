@@ -33,7 +33,7 @@
  *   node build/check-state.mjs --no-git   # invariants only
  *
  * Runs in CI and before build:theme, alongside check:config and check:stylesheets. */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { root } from "./lib/project-config.mjs";
@@ -150,6 +150,57 @@ if (existsSync(REGISTER)) {
           `The next person to file will collide — this is how FND-033/034 and FND-035..038 both happened.`
       );
     }
+  }
+}
+
+/* ── 4b. item status is one of the lifecycle values ─────────────────────────── */
+/* Free-form statuses ("built (round 3, checker PASS)", "checker-pass", ready_for_review vs
+ * ready-for-review) made the index unreadable on the first two projects. Warning, not fatal,
+ * so an existing project can adopt the scaffold and clean up at its own pace. */
+const STATUSES = ["queued", "built", "ready-for-review", "merged", "handover", "needs-human", "needs-re-ref", "deferred", "closed"];
+const ALIASES = { ready_for_review: "ready-for-review", "checker-pass": "built", "closed-unmerged": "closed", "needs-rework": "needs-human", todo: "queued" };
+for (const it of items) {
+  const st = it?.status;
+  if (STATUSES.includes(st)) continue;
+  const hint = ALIASES[st] ?? STATUSES.find((s) => String(st ?? "").startsWith(s));
+  warnings.push(
+    `item \`${it?.id ?? "?"}\` has status ${JSON.stringify(st)} — use one of ${STATUSES.join(" | ")}` +
+      (hint ? ` (probably "${hint}")` : "")
+  );
+}
+
+/* ── 4c. every probed item has a judged baseline ───────────────────────────── */
+/* gate:regression only covers items with a measurements.json; a probes.json alone is a
+ * regression test that never runs. */
+const SPECS = join(root, "specs");
+for (const kind of existsSync(SPECS) ? readdirSync(SPECS, { withFileTypes: true }) : []) {
+  if (!kind.isDirectory()) continue;
+  for (const item of readdirSync(join(SPECS, kind.name), { withFileTypes: true })) {
+    if (!item.isDirectory()) continue;
+    const dir = join(SPECS, kind.name, item.name);
+    if (existsSync(join(dir, "probes.json")) && !existsSync(join(dir, "measurements.json"))) {
+      warnings.push(
+        `specs/${kind.name}/${item.name} has probes.json but no measurements.json, so gate:regression ` +
+          `never checks it — have the checker judge it and commit the baseline`
+      );
+    }
+  }
+}
+
+/* ── 4d. every handover is in the embed map ─────────────────────────────────── */
+/* An unmapped handover never gets its code embedded, and goes stale when its source changes. */
+const HANDOVER = join(root, "handover");
+const MAP = join(HANDOVER, "handover-map.json");
+if (existsSync(MAP)) {
+  let mapped = {};
+  try { mapped = JSON.parse(readFileSync(MAP, "utf8")); } catch { problems.push("handover/handover-map.json is not valid JSON"); }
+  const NOT_HANDOVERS = new Set(["README.md", "MENTOR-STUDIO-PROMPT.md"]);
+  for (const f of readdirSync(HANDOVER)) {
+    if (!f.endsWith(".md") || NOT_HANDOVERS.has(f) || f in mapped) continue;
+    warnings.push(
+      `handover/${f} has no entry in handover/handover-map.json — add its source files, or \`"${f}": []\` ` +
+        `if it carries no code, then run \`npm run embed:handover\``
+    );
   }
 }
 

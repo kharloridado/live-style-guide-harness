@@ -565,6 +565,7 @@ let changed = 0;
 for (const [md, raw] of Object.entries(MAP)) {
   if (md.startsWith("$")) continue; // $comment — documentation inside the data file, not an entry
   const entry = Array.isArray(raw) ? { files: raw } : raw;
+  if (!entry.files?.length && !entry.mentor) continue; // `[]` — a prose handover with no code to embed
   const path = join(handoverDir, md);
   let text;
   try { text = readFileSync(path, "utf8"); } catch { console.warn(`skip (missing): ${md}`); continue; }

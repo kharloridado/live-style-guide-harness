@@ -64,35 +64,6 @@ for (const [name, c] of Object.entries(cfg.conventions ?? {})) {
   }
 }
 
-/* ---- 4. the board block must be all-or-nothing ---------------------------------- */
-/* Board mode is ON iff owner AND number are both set. A half-configured board is the
- * dangerous state: the skills would resolve a project, start moving cards, and read
- * comments from nobody — so `owners` being empty is an error, not a default. It is the
- * allow-list that decides whose card comments are treated as spec; empty means the
- * untrusted-input rule has nothing to filter against. */
-const board = cfg.board ?? {};
-const boardOn = board.owner != null && board.number != null;
-if ((board.owner == null) !== (board.number == null)) {
-  errors.push(
-    `board.owner and board.number must be set together (owner=${JSON.stringify(board.owner)}, ` +
-      `number=${JSON.stringify(board.number)}).\n    → set both to enable board-driven mode, or both to null to disable it`
-  );
-}
-if (boardOn) {
-  if (!Number.isInteger(board.number)) {
-    errors.push(`board.number must be an integer (the project number from its URL), got ${JSON.stringify(board.number)}.`);
-  }
-  if (!Array.isArray(board.owners) || board.owners.length === 0) {
-    errors.push(
-      `board.owners is empty but board mode is on. It is the allow-list of logins whose card ` +
-        `comments count as spec — with none, every comment is ignored and the review-feedback loop silently does nothing.`
-    );
-  }
-  if (!board.shipBase) {
-    errors.push(`board.shipBase must name the branch that board-ship merges into (normally "main").`);
-  }
-}
-
 /* ---- 4b. the platform-knowledge pack must actually be on disk ------------------- */
 /* The outsystems-loop skills hold no OutSystems platform knowledge — no block catalog, no
  * variable list, no widget conventions. They read all of it from here at runtime. When this

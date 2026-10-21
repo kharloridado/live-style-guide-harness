@@ -12,8 +12,8 @@ and stamps it at the top of `dist/theme.css`, so the file a developer pastes int
 editor self-identifies and matches its entry below. See `CLAUDE.md` → "Releasing" for how
 a release is cut.
 
-"Shipped" means merged to `main`. Merging is not the same as delivered: **only board-Approved
-items reach an OutSystems build**, and only a human moves an item to Approved.
+"Shipped" means merged to `main`. The loop opens a PR per item and never merges: a human merging the
+PR is the approval, and only merged work reaches an OutSystems build.
 
 Use these section headings, in this order, under each version: `Added`, `Changed`,
 `Deprecated`, `Removed`, `Fixed`, `Security`. Write entries for the person integrating the
@@ -22,7 +22,22 @@ and what they have to re-paste.
 
 ## [Unreleased]
 
+**Leaner, and shaped around how projects actually work.** Board mode and the unattended loop
+runner are gone — neither was used by a real project. CLAUDE.md is a short map. New checks catch
+the gaps two real projects hit, and `npm run release` does the mechanical half of a release.
+Existing projects: take `build/` from the template (README → "Pulling template improvements"),
+then clear what `check:state` now warns about.
+
 ### Added
+
+- **`npm run release -- patch|minor`.** Bumps the version, moves the Unreleased notes under the new
+  heading, builds the ship theme and checks its header names the version, keeps it as
+  `dist/theme-<version>.css` (the ODC paste — no more mixing it up with the dev copy), packages and
+  records the ODC docs, restores the dev build, and prints the remaining steps.
+- **Three new `check:state` warnings.** An item `status` outside the lifecycle list
+  (`queued | built | ready-for-review | merged | handover | needs-human | needs-re-ref | deferred |
+  closed`); a `probes.json` with no `measurements.json` (a regression test that never runs); a
+  `handover/*.md` missing from `handover-map.json`. A prose-only handover maps to `[]`.
 
 - **O11 projects.** `npm run init -- --environment=O11` sets up an OutSystems 11 project. It
   skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: on O11, design-time
@@ -43,3 +58,25 @@ and what they have to re-paste.
 - **Several Mentor prompts per handover.** A `handover-map.json` entry may give
   `mentor.prompts: [{ title, text }, …]`; `npm run embed:handover` renders each as its own
   subsection, for changes that span the theme module and consumer apps.
+
+### Changed
+
+- **CLAUDE.md is a map, not a manual** — 219 → ~115 lines, built around the real workflow: a
+  request in a session → one PR with its review Artifact → a human merges → handover → release.
+- **`loop/state.json` is an index** — items and findings only, with a fixed field list. Run
+  settings (mode, tiers, pauses, max rounds) moved to `loop/goal.md`, which is now optional and only
+  needed for queue runs. Figma URL, file key and repo are no longer copied into either file.
+- **Gate and CI lessons moved next to the gate**, in `build/gate/LESSONS.md` (same section numbers).
+- **`validate:theme`** reports a missing OutSystems UI base as one setup step to run, instead of
+  dozens of misleading "undefined token" lines.
+- **CI** recognises the template by GitHub's *Template repository* flag rather than a hard-coded
+  repo name, so a team's own copy behaves the same.
+- **`setup-finding-labels.sh`** also creates the `deliverable` label the loop puts on its PRs.
+
+### Removed
+
+- **Board mode**: `loop/board-run.sh`, `.github/setup-project.sh`,
+  `.github/migrate-project-status.sh`, the `deliverable` issue template, the `board` config block
+  and its checks, and the `board:*` scripts. A merged PR is now the approval.
+- **`loop/run.sh`** (the unattended runner) and **`loop/figma-links.md`** (provenance lives in each
+  `ref.md`).

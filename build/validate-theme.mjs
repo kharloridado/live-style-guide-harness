@@ -134,12 +134,6 @@ if (existsSync(osuiBase)) {
     if (!selectors.length || !selectors.every((s) => GLOBAL_SELECTOR.test(s))) continue;
     for (const d of m[2].matchAll(/(--[\w-]+)\s*:/g)) defined.add(d[1]);
   }
-} else {
-  console.warn(
-    "validate:theme — review/vendor/outsystems-ui/outsystems-ui.css is missing, so framework\n" +
-      "                 tokens cannot be resolved (run `npm run build:osui`). Any var() a block\n" +
-      "                 override takes from OutSystems UI will be reported as dangling."
-  );
 }
 
 /* A usage only counts as dangling when it has NO fallback — `var(--x, 8px)` is a
@@ -153,7 +147,14 @@ for (const m of code.matchAll(/var\(\s*(--[\w-]+)\s*([,)])/g)) {
   }
 }
 
-if (dangling.size) {
+if (dangling.size && !existsSync(osuiBase)) {
+  errors.push(
+    `${dangling.size} token reference(s) cannot be checked: the OutSystems UI base is not built.\n\n` +
+      `    review/vendor/outsystems-ui/outsystems-ui.css is missing, so tokens the framework owns\n` +
+      `    (--space-m, --color-neutral-0, …) look undefined. Build it once per clone, then re-run:\n\n` +
+      `      git submodule update --init vendor/outsystems-ui && npm run build:osui`
+  );
+} else if (dangling.size) {
   const list = [...dangling.entries()]
     .slice(0, 15)
     .map(([name, line]) => `      ${name}  (first used at dist/theme.css:${line})`)

@@ -1,7 +1,7 @@
 {
   "name": "outsystems-project-template",
   "version": "0.2.0",
-  "description": "OutSystems design-system project: specs, token layer and audit, theme build, fidelity gate and one review Artifact per build. Behaviour lives in the outsystems-loop Claude Code plugin.",
+  "description": "OutSystems design-system project: specs, token layer and audit, theme build, fidelity gate and one review Artifact per build. Behaviour lives in the outsystems-loop Claude Code plugin (4.x).",
   "private": true,
   "type": "module",
   "scripts": {
@@ -25,9 +25,7 @@
     "embed:handover": "node build/embed-handover-code.mjs",
     "docs:odc": "node build/odc-docs.mjs",
     "docs:odc:record": "node build/odc-docs.mjs --record",
-    "board:advance": "./loop/board-run.sh advance",
-    "board:ship": "./loop/board-run.sh ship",
-    "board:sync": "./loop/board-run.sh sync"
+    "release": "node build/release.mjs"
   },
   "devDependencies": {
     "lightningcss-cli": "^1.30.1",

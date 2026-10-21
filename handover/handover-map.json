@@ -20,9 +20,11 @@
     "`mentor.kind` is one of: web-component | block | restyle. When `mentor` is omitted the prompt",
     "is derived from the artifact kind automatically.",
     "",
+    "A handover with no code to embed (a screen walkthrough, say) still gets an entry: `\"screen.md\": []`.",
+    "",
     "Tokens are NOT listed here — they travel once via dist/theme.css, which is its own paste.",
     "",
     "Add an entry for every new handover. A handover with no entry gets no embedded code, and the",
-    "embed silently goes stale when its source changes — so keep this in sync (the build warns)."
+    "embed silently goes stale when its source changes — so keep this in sync (check:state warns)."
   ]
 }

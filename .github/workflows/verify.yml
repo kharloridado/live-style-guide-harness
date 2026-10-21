@@ -25,12 +25,10 @@ jobs:
       # which point it misses the real regression too. That is the same failure mode
       # the fidelity diff's geometry tolerance exists to avoid.
       #
-      # Detecting "am I the template?" by sniffing for placeholders instead would be
-      # WRONG: a real project that forgot to run `npm run init` would then silently
-      # skip its own drift guard, which is the exact thing that guard exists to catch.
-      # Matching the repository name has no such false negative — a generated project
-      # has a different name and always gets the full gate.
-      IS_TEMPLATE: ${{ github.repository == 'kharloridado/outsystems-project-template' }}
+      # GitHub's own "Template repository" flag, not a hard-coded name, so a team that
+      # copies this scaffold into its own org gets the same behaviour. A project generated
+      # from the template is never flagged, so it always gets the full gate.
+      IS_TEMPLATE: ${{ github.event.repository.is_template == true }}
     steps:
       - uses: actions/checkout@v4
         with:
