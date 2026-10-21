@@ -132,6 +132,21 @@ if (existsSync(MCP_PATH)) {
     errors.push(`.mcp.json is not valid JSON: ${e.message}`);
   }
 }
+/* On ODC, OutSystems' official plugin is required: it carries the server and the skill. */
+if ((cfg.environment ?? "ODC") === "ODC") {
+  let settings = {};
+  try { settings = JSON.parse(readFileSync(join(root, ".claude", "settings.json"), "utf8")); } catch {}
+  if (
+    settings.enabledPlugins?.["outsystems@outsystems"] !== true ||
+    settings.extraKnownMarketplaces?.outsystems?.source?.repo !== "OutSystems/outsystems-mcp"
+  ) {
+    errors.push(
+      ".claude/settings.json must enable OutSystems' official plugin on ODC: " +
+        '"outsystems@outsystems": true in enabledPlugins, and the "outsystems" marketplace from ' +
+        "OutSystems/outsystems-mcp in extraKnownMarketplaces."
+    );
+  }
+}
 const tenant = cfg.odcTenant;
 const tenantSet = typeof tenant === "string" && tenant.trim() !== "" && !tenant.includes("<<");
 const environment = cfg.environment ?? "ODC";
