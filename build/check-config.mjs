@@ -115,11 +115,23 @@ function scan(path) {
 
 SCAN_DIRS.forEach((d) => walk(join(root, d)));
 
-/* ---- ODC tenant: project.config.json and .mcp.json must agree ------------------- */
-/* This is the one project value that is deliberately duplicated, because the harness
- * reads .mcp.json before any build script runs. Duplication is only safe when something
- * checks it, so the drift check lives here — inside the checker's deterministic gate. */
+/* ---- ODC tenant and the MCP server ---------------------------------------------- */
+/* OutSystems' `outsystems` plugin declares the ODC server from each developer's
+ * tenant_hostname option. A project-scope `outsystems` entry would duplicate or hide it. */
 const MCP_PATH = join(root, ".mcp.json");
+if (existsSync(MCP_PATH)) {
+  try {
+    if (JSON.parse(readFileSync(MCP_PATH, "utf8"))?.mcpServers?.outsystems) {
+      errors.push(
+        ".mcp.json declares an `outsystems` server, which duplicates or hides the one OutSystems' " +
+          "plugin declares. Re-run `npm run init` to remove it, then set the plugin's tenant: " +
+          "`claude plugin install outsystems@outsystems --config tenant_hostname=<odcTenant>`."
+      );
+    }
+  } catch (e) {
+    errors.push(`.mcp.json is not valid JSON: ${e.message}`);
+  }
+}
 const tenant = cfg.odcTenant;
 const tenantSet = typeof tenant === "string" && tenant.trim() !== "" && !tenant.includes("<<");
 const environment = cfg.environment ?? "ODC";
@@ -142,24 +154,6 @@ if (!["ODC", "O11"].includes(environment)) {
       "`--odc-tenant=none` if this project has no MCP access (handovers then carry Mentor prompts). " +
       "Do NOT guess it: a wrong tenant points every ODC call at somebody else's environment."
   );
-} else if (!existsSync(MCP_PATH)) {
-  errors.push(`odcTenant is "${tenant}" but .mcp.json does not exist. Re-run \`npm run init\` to generate it.`);
-} else {
-  let mcpUrl = null;
-  try {
-    mcpUrl = JSON.parse(readFileSync(MCP_PATH, "utf8"))?.mcpServers?.outsystems?.url ?? null;
-  } catch (e) {
-    errors.push(`.mcp.json is not valid JSON: ${e.message}`);
-  }
-  const expected = `https://${tenant}/mcp`;
-  if (mcpUrl && mcpUrl !== expected) {
-    errors.push(
-      `.mcp.json points at ${mcpUrl} but project.config.json says ${expected}. ` +
-        "Re-run `npm run init` rather than hand-editing .mcp.json."
-    );
-  } else if (!mcpUrl) {
-    errors.push(".mcp.json has no mcpServers.outsystems.url. Re-run `npm run init` to generate it.");
-  }
 }
 
 /* ---- modules: where the work lands, by role, valid for the platform ------------- */

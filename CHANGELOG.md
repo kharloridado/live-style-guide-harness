@@ -101,6 +101,11 @@ then clear what `check:state` now warns about.
 
 ### Changed
 
+- **The ODC MCP comes from OutSystems' own plugin.** `npm run init` no longer writes `.mcp.json`;
+  it removes an old `outsystems` entry and prints the one command each developer runs:
+  `claude plugin install outsystems@outsystems --config tenant_hostname=<odcTenant>`.
+  `check:config` fails while an `outsystems` entry remains in `.mcp.json`, because it duplicates
+  or hides the plugin's server. Pair with `lsg` 4.3.
 - **`npm run init` on a fresh copy** resets `CHANGELOG.md` to an empty `[Unreleased]` and the
   version to 0.0.0, so a new project does not inherit the template's release notes.
 - **Renamed to Live Style Guide Harness**, and its plugin to `lsg` (repo `live-style-guide-loop`).

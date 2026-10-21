@@ -44,7 +44,7 @@ jobs:
         run: npm run gate:selftest
 
       # The drift guard: no surviving <<PLACEHOLDER>>, no leaked example prefix,
-      # .mcp.json's tenant agreeing with project.config.json.
+      # no project-scope OutSystems MCP entry shadowing OutSystems' plugin.
       # Skipped only on the template itself — see IS_TEMPLATE above.
       - name: check:config
         if: env.IS_TEMPLATE != 'true'
