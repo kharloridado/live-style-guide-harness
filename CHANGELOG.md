@@ -33,7 +33,9 @@ then clear what `check:state` now warns about.
 - **Approved work gets built into OutSystems.** After a merge, the plugin's `/lsg:deliver` builds
   the Block, its Script and its Live Style Guide page into the modules through the OutSystems MCP
   and checks them in a browser; without an MCP the handover carries the same steps for a
-  developer. CLAUDE.md and `specs/foundations/platform.md` say so.
+  developer. Each delivery also adds the Markdown it changed in `specs/` to the modules' Resources
+  (`npm run docs:odc`), not only each release. CLAUDE.md and `specs/foundations/platform.md` say
+  so; pair with `lsg` 4.2.
 - **MIT license** for the template. `npm run init` removes it on a fresh copy, so a client project
   chooses its own licence instead of inheriting this one.
 - **`npm run release -- patch|minor`.** Bumps the version, moves the Unreleased notes under the new

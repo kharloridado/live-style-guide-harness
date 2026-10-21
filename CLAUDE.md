@@ -14,8 +14,10 @@ hooks) is the versioned **`lsg`** plugin ([live-style-guide-loop](https://github
    from the signed inventory in `loop/goal.md`.
 3. A human reviews the Artifact and merges. **Merging is the approval** — never merge your own PR.
 4. After the merge, `/lsg:deliver` builds it into the modules through the OutSystems MCP and checks
-   it in a browser; without an MCP it hands the same steps to a developer. Either way it opens the
-   handover issue. Then `npm run release` when there is something to ship.
+   it in a browser, and adds the Markdown it changed in `specs/` (`npm run docs:odc`) to the modules'
+   Resources so Mentor and other agents read the same rules people do. Without an MCP it hands the
+   same steps to a developer. Either way it opens the handover issue. Then `npm run release` when
+   there is something to ship.
 
 ## Before writing or modifying any UI code
 
