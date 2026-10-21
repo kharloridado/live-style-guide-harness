@@ -599,7 +599,7 @@ function mentorSection(md, entry) {
       MENTOR_MARKER,
       ``,
       `> O11 has no Mentor Studio. Follow these steps in **Service Studio**, in the module each one`,
-      `> names, after the paste/import steps in the checklist. Where an OutSystems MCP server is`,
+      `> names, after the paste/import steps in the checklist. Where Service Studio's MCP server is`,
       `> connected, the same steps can be applied through it — then verify in a browser.`,
       ...steps.flatMap((p) => [``, ...(p.title ? [`### ${p.title}`, ``] : []), "```", O11 ? forO11(p.text) : p.text, "```"]),
     ].join("\n");

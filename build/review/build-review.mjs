@@ -59,6 +59,67 @@ function sharedAssets(ids) {
   return { styles, scripts, stateGate: read('build/review/state-gate.js') };
 }
 
+/* ---------- brand: the review chrome wears the project's theme ---------- */
+
+/* Custom properties declared on :root / html / body, in cascade order across the given sheets,
+ * plus the font-family set on html or body. */
+function globalDeclarations(sheets) {
+  const vars = {};
+  let family = null;
+  for (const css of sheets) {
+    const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of text.matchAll(/(?<=^|})\s*([^{}@]+)\{([^{}]*)\}/g)) {
+      const selectors = m[1].split(',').map((x) => x.trim());
+      if (!selectors.every((x) => /^(:root|html|body)$/.test(x))) continue;
+      for (const d of m[2].matchAll(/(?<![\w-])(--[\w-]+|font-family)\s*:\s*([^;]+)/g)) {
+        if (d[1] === 'font-family') family = d[2].trim();
+        else vars[d[1]] = d[2].trim();
+      }
+    }
+  }
+  return { vars, family };
+}
+
+function resolveVar(value, vars, depth = 0) {
+  if (value == null || depth > 10) return null;
+  return value.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*(?:\([^()]*\))?[^()]*))?\)/g, (_, name, fallback) =>
+    resolveVar(vars[name], vars, depth + 1) ?? resolveVar(fallback?.trim(), vars, depth + 1) ?? '');
+}
+
+/* Primary colour, neutrals and body face from the OutSystems UI base, then the project theme, so
+ * an unthemed project reviews in OutSystems UI's own colours. Status colours stay the chrome's:
+ * they must stay legible on any brand. */
+function brandCss(styles) {
+  const { vars, family } = globalDeclarations(styles.map((x) => x.css));
+  const v = (name) => resolveVar(vars[name], vars) || null;
+  const primary = v('--color-primary');
+  if (!primary) return '';
+  const light = {
+    '--accent': primary,
+    '--accent-soft': `color-mix(in srgb, ${primary} 12%, white)`,
+    '--ink': v('--color-neutral-10'),
+    '--muted': v('--color-neutral-8'),
+    '--line': v('--color-neutral-4'),
+    '--ground': v('--color-neutral-1'),
+    '--surface-2': v('--color-neutral-2'),
+    '--stage': v('--color-neutral-3'),
+  };
+  const dark = {
+    '--accent': `color-mix(in srgb, ${primary} 55%, white)`,
+    '--accent-soft': `color-mix(in srgb, ${primary} 30%, #161d27)`,
+  };
+  const block = (o) => Object.entries(o).filter(([, x]) => x).map(([k, x]) => `${k}: ${x};`).join(' ');
+  const face = resolveVar(family, vars);
+  const faces = styles.map((x) => x.css.match(/@font-face\s*\{[^}]*\}/g) || []).flat().join('\n');
+  return [
+    faces,
+    face ? `:root { --sans: ${face}, system-ui, -apple-system, "Segoe UI", sans-serif; --cond: var(--sans); }` : '',
+    `:root { ${block(light)} }`,
+    `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ${block(dark)} } }`,
+    `:root[data-theme="dark"] { ${block(dark)} }`,
+  ].filter(Boolean).join('\n');
+}
+
 /* ---------- measurements ---------- */
 
 function describe(p) {
@@ -214,7 +275,11 @@ function render(title, ids, ctx) {
   };
   const data = { project, shared: sharedAssets(ids), items: ids.map((id) => itemData(id, ctx)) };
   const json = JSON.stringify(data).replace(/<\//g, '<\\/').replace(/<!--/g, '<\\u0021--');
-  return { html: read('build/review/review-template.html').split('__TITLE__').join(title).split('__PREFIX__').join(ctx.cfg.classPrefix).split('__DATA__').join(json), data };
+  const brand = brandCss(data.shared.styles.slice(0, 2)).replace(/<\//g, '<\\/');
+  const html = read('build/review/review-template.html')
+    .split('__TITLE__').join(title).split('__PREFIX__').join(ctx.cfg.classPrefix)
+    .split('__BRAND__').join(brand).split('__DATA__').join(json);
+  return { html, data };
 }
 
 function main() {

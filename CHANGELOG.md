@@ -42,8 +42,8 @@ then clear what `check:state` now warns about.
   `handover/*.md` missing from `handover-map.json`. A prose-only handover maps to `[]`.
 
 - **O11 projects.** `npm run init -- --environment=O11` sets up an OutSystems 11 project. It
-  skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: O11 has no tenant
-  MCP endpoint, so handovers carry Service Studio steps. `check:config` passes without a tenant on
+  skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: on O11 the MCP is
+  Service Studio's own, configured per machine; without it, handovers carry Service Studio steps. `check:config` passes without a tenant on
   O11, and `build:osui` builds the O11 version of OutSystems UI, so the fidelity gate measures
   against the framework the environment actually serves. ODC projects are unchanged.
 
@@ -84,6 +84,11 @@ then clear what `check:state` now warns about.
   otherwise every handover carries a Mentor Studio prompt (ODC) or Service Studio steps (O11), and
   each prompt names the module it runs in. `npm run init -- --odc-tenant=none` records an ODC
   project with no MCP access. `specs/foundations/platform.md` → "How work reaches the modules".
+- **Review Artifacts wear the project's brand.** The review page's chrome — accent, neutrals and
+  body font — is resolved at build time from the project theme over the OutSystems UI base, so a
+  reviewer sees the design system's own colours and type around the specimens. A project with no
+  theme of its own reviews in OutSystems UI's defaults. Status colours keep their own legible
+  palette.
 - **Several Mentor prompts per handover.** A `handover-map.json` entry may give
   `mentor.prompts: [{ title, text }, …]`; `npm run embed:handover` renders each as its own
   subsection, for changes that span the theme module and consumer apps.
