@@ -9,10 +9,15 @@
 # through playwright-core's `channel` — no browser download, no cache to warm.
 name: verify
 
+# Pull requests and main only: a branch with no PR does not run, and a PR commit runs once.
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:

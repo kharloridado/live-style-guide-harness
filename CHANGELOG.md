@@ -77,6 +77,8 @@ then clear what `check:state` now warns about.
   needed for queue runs. Figma URL, file key and repo are no longer copied into either file.
 - **`validate:theme`** reports a missing OutSystems UI base as one setup step to run, instead of
   dozens of misleading "undefined token" lines.
+- **CI runs on pull requests and `main` only**, and a newer push cancels the run it replaces. A
+  branch without a PR no longer runs (or emails), and a PR commit runs once instead of twice.
 - **CI** recognises the template by GitHub's *Template repository* flag rather than a hard-coded
   repo name, so a team's own copy behaves the same.
 - **`setup-finding-labels.sh`** also creates the `deliverable` label the loop puts on its PRs.
