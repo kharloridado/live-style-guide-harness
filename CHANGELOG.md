@@ -30,6 +30,8 @@ then clear what `check:state` now warns about.
 
 ### Added
 
+- **MIT license** for the template. `npm run init` removes it on a fresh copy, so a client project
+  chooses its own licence instead of inheriting this one.
 - **`npm run release -- patch|minor`.** Bumps the version, moves the Unreleased notes under the new
   heading, builds the ship theme and checks its header names the version, keeps it as
   `dist/theme-<version>.css` (the ODC paste — no more mixing it up with the dev copy), packages and

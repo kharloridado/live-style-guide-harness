@@ -70,3 +70,9 @@ If your project had to change a `build/` file, open a PR against the template in
 next project gets it too.
 
 Release notes for this template: [`CHANGELOG.md`](./CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE). A project created from this template is not bound to it: `npm run init` removes
+this LICENSE on a fresh copy, so each engagement chooses its own. `vendor/outsystems-frontend-skills`
+keeps its BSD-3-Clause licence, and licensed vendor assets follow `vendor/LICENSING.md`.
