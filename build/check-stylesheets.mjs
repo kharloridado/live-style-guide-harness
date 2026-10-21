@@ -4,8 +4,8 @@
  * dist/theme.css is checked after assembly; this checks the files people and agents merge by
  * hand, so a stray brace is caught at its origin (see build/lib/css-structure.mjs).
  *
- * Scope: src/blocks/*.css, src/components/*.css, build/review/*.css (the specimen chrome) and
- * tokens/*.css. Everything a person edits, plus the token sources the theme is built from,
+ * Scope: src/blocks/*.css, src/components/*.css, src/lsg/*.css, build/review/*.css (the specimen
+ * chrome) and tokens/*.css. Everything a person edits, plus the token sources the theme is built from,
  * so a stray brace is caught at its origin rather than after assembly.
  *
  * Usage: node build/check-stylesheets.mjs      (runs in CI, and before build:theme) */
@@ -18,6 +18,7 @@ const DIRS = [
   "tokens",
   "src/blocks",
   "src/components",
+  "src/lsg",
   "build/review",
 ];
 

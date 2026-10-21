@@ -26,3 +26,10 @@ export function projectConfig() {
   return cached;
 }
 
+/** The name of the module that plays `role` (theme | patterns | liveStyleGuide | template |
+ *  patPreview). Projects initialised before `modules` existed keep the theme in odcThemeModule. */
+export function moduleName(role) {
+  const cfg = projectConfig();
+  return cfg.modules?.[role]?.name ?? (role === "theme" ? cfg.odcThemeModule : undefined);
+}
+

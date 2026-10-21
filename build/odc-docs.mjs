@@ -20,7 +20,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, relative } from "node:path";
 import { crc32, deflateRawSync } from "node:zlib";
-import { projectConfig, root } from "./lib/project-config.mjs";
+import { moduleName, projectConfig, root } from "./lib/project-config.mjs";
 
 const cfg = projectConfig();
 const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
@@ -125,7 +125,7 @@ for (const d of built) writeFileSync(join(outDir, d.name), d.data);
 const manifest = {
   designSystem: cfg.designSystemName,
   version,
-  module: cfg.odcThemeModule,
+  module: moduleName('theme'),
   files: built.map(({ name, source, sha256, bytes }) => ({ name, source, sha256, bytes })),
 };
 const manifestBuf = Buffer.from(JSON.stringify(manifest, null, 2) + "\n");
@@ -139,7 +139,7 @@ rmSync(deltaZip, { force: true });
 if (delta.length) writeFileSync(deltaZip, zip(delta));
 
 const rel = (p) => relative(root, p).replace(/\\/g, "/");
-console.log(`odc-docs → ${rel(outDir)}/ (${built.length} documents for ${cfg.odcThemeModule})`);
+console.log(`odc-docs → ${rel(outDir)}/ (${built.length} documents for ${moduleName('theme')})`);
 console.log(`  all:     ${rel(fullZip)}`);
 console.log(delta.length ? `  changed: ${rel(deltaZip)} (${delta.length})` : "  changed: none — ODC is up to date");
 for (const d of added) console.log(`    + ${d.name}   new`);
@@ -153,7 +153,7 @@ if (record) {
     $comment: "What ODC holds, by document hash. Written by `npm run docs:odc:record` after an import; commit it with the release.",
     version,
     recorded: new Date().toISOString().slice(0, 10),
-    module: cfg.odcThemeModule,
+    module: moduleName('theme'),
     files,
   };
   writeFileSync(ledgerPath, JSON.stringify(out, null, 2) + "\n");

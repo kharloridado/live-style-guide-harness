@@ -176,6 +176,21 @@ if (existsSync(MAP)) {
   }
 }
 
+/* ── 4e. every usage spec says what its Live Style Guide page shows ─────────────── */
+/* The page is part of the deliverable: a component with no §9 ships with no documentation page. */
+for (const kind of ["components", "patterns"]) {
+  const dir = join(SPECS, kind);
+  if (!existsSync(dir)) continue;
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith(".md") || f === "README.md") continue;
+    if (/^##\s+9\.\s+Live Style Guide\b/m.test(readFileSync(join(dir, f), "utf8"))) continue;
+    warnings.push(
+      `specs/${kind}/${f} has no "## 9. Live Style Guide" section — say what its page shows ` +
+        `(specs/README.md, usage spec template)`
+    );
+  }
+}
+
 /* ── 5. nothing disappeared since HEAD (and since MERGE_HEAD, mid-merge) ────── */
 /* An entry is identified by its id when it has one and by item + class when it is still
  * UNALLOCATED, so a legitimate renumber is not read as a deletion and an unallocated entry

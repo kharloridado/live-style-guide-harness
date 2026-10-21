@@ -31,7 +31,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
-import { projectConfig } from '../lib/project-config.mjs';
+import { moduleName } from '../lib/project-config.mjs';
 import { serveRepo, urlFor } from '../lib/virtual-origin.mjs';
 import { itemFromPath } from '../lib/specs.mjs';
 import { writeSpecimenPage, SpecimenError } from '../review/specimen-page.mjs';
@@ -48,11 +48,11 @@ const EXIT_NO_BROWSER = 4;
  * describing a page nobody will ever see. A 404 here invalidates the whole viewport. */
 const CRITICAL_RESOURCES = new Set(['stylesheet', 'font', 'script']);
 
-/* One exemption: a webfont under the theme's ODC Resource path (`/<odcThemeModule>/x.woff2`).
+/* One exemption: a webfont under the theme's ODC Resource path (`/<theme module>/x.woff2`).
  * ODC rewrites that src at compile time, so it cannot resolve here. It is recorded with
  * critical:false instead of invalidating the viewport; every other font stays critical.
  * Serving the faces from vendor/fonts/ (build/lib/virtual-origin.mjs) avoids the fallback. */
-const THEME_RESOURCE_PREFIX = '/' + projectConfig().odcThemeModule + '/';
+const THEME_RESOURCE_PREFIX = '/' + moduleName('theme') + '/';
 
 function isCritical(resourceType, url) {
   if (!CRITICAL_RESOURCES.has(resourceType)) return false;

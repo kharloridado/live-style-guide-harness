@@ -100,7 +100,7 @@ state them inline. Take the rules from
 follow" list (one Layout per screen; the menu in the layout's `Navigation` placeholder; only Links
 and Submenus inside `PageLinks`, never styled; the title as one `h1` in `Title`; Phosphor icons at
 Font size; a menubar owns only menu items; ODC cannot omit an attribute, so never bind one to "").
-Say "the Theme CSS is already in <<ODC_THEME_MODULE>>", not `dist/theme.css`.
+Say "the Theme CSS is already in <<THEME_MODULE>>", not `dist/theme.css`.
 
 ### 4. Placeholder, Container or Text
 
@@ -115,7 +115,7 @@ Say "the Theme CSS is already in <<ODC_THEME_MODULE>>", not `dist/theme.css`.
 
 Split by module, one prompt each, and say which module it runs in:
 
-- **Prompt A — the theme module** (`project.config.json` → `odcThemeModule`): the reusable,
+- **Prompt A — the theme module** (`project.config.json` → `modules.theme`): the reusable,
   **public** layout Block. It bakes the design-system class into the OutSystems UI layout wrapper's
   `ExtendedClass` (`"<<CLASS_PREFIX>>side-menu " + ExtendedClass`) so screens set nothing, copies the generic template Blocks it
   needs (e.g. `MenuIcon`), and exposes a placeholder for anything app-specific (e.g. `HeaderTitle`).
@@ -152,6 +152,20 @@ with a **short follow-up prompt** scoped to one Block: numbered steps, then a `R
 the target HTML, then "No CSS, no JavaScript, no other changes. List what you changed."
 
 ---
+
+## L5 — a custom Block with a required Script (the default)
+
+A component OutSystems UI does not ship is an OutSystems Block: widgets, placeholders and typed
+input parameters, styled by the theme, plus one Script the Block requires for behaviour. Its
+handover has a `## The Block` section — inputs, placeholders, events, the widget tree with Style
+Classes, the named widget the script works on, and the three lifecycle calls — and its map entry
+names the JS destination as the Block's **Required Script**. `npm run embed:handover` then derives
+the prompt: Static Entities first, the Block interface, the widget tree, `Raise<Event>` actions,
+then OnReady (`init`), OnParametersChanged (`update`) and OnDestroy (`destroy`), each a "Run
+JavaScript" node keyed by the named widget's `.Id`. `handover/lsg-foundations.md` is a worked
+example.
+
+The sections below are for projects that already ship **Web Components**.
 
 ## A) Reusable template (fill the `<<…>>` blanks)
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* build/token-audit.mjs — every visual value in delivered CSS must be a token.
  *
- * Scans src/blocks/*.css and src/components/*.css. For each hard-coded value it prints the file,
- * line, value and the token of the same family that holds the same value, if one does. tokens/
- * is not scanned: that is where literals belong.
+ * Scans src/blocks/*.css, src/components/*.css and src/lsg/*.css. For each hard-coded value it
+ * prints the file, line, value and the token of the same family that holds the same value, if one
+ * does. tokens/ is not scanned: that is where literals belong.
  *
  *   error    a colour, spacing, font-size, font-weight, radius, shadow or z-index literal
  *   warning  a raw duration, or a length on a property with no token scale (width, height…)
@@ -19,7 +19,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { root } from './lib/project-config.mjs';
 
-const DIRS = ['src/blocks', 'src/components'];
+const DIRS = ['src/blocks', 'src/components', 'src/lsg'];
 const OSUI = join(root, 'review', 'vendor', 'outsystems-ui', 'outsystems-ui.css');
 const THEME = join(root, 'dist', 'theme.css');
 

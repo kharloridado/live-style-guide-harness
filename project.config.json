@@ -6,10 +6,17 @@
   "designSystemName": "<<DESIGN_SYSTEM_NAME>>",
   "classPrefix": "<<CLASS_PREFIX>>",
   "jsNamespace": "<<JS_NAMESPACE>>",
-  "odcThemeModule": "<<ODC_THEME_MODULE>>",
   "odcTenant": "<<ODC_TENANT>>",
   "repo": "<<OWNER/REPO>>",
   "environment": "ODC",
+
+  "modules": {
+    "$comment": "Where the work lands, by role. ODC: kind library | app. O11: kind CrossDevice | ReactiveLibrary, and app names its application. npm run init fills these with the playbook's default names.",
+    "theme": { "name": "<<THEME_MODULE>>", "kind": "library" },
+    "patterns": { "name": "<<PATTERNS_MODULE>>", "kind": "library" },
+    "liveStyleGuide": { "name": "<<LSG_MODULE>>", "kind": "app" },
+    "template": { "name": "<<TEMPLATE_MODULE>>", "kind": "app" }
+  },
 
   "figma": {
     "fileKey": "<<FIGMA_FILE_KEY>>",

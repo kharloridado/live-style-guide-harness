@@ -26,5 +26,31 @@
     "",
     "Add an entry for every new handover. A handover with no entry gets no embedded code, and the",
     "embed silently goes stale when its source changes — so keep this in sync (check:state warns)."
-  ]
+  ],
+  "lsg-foundations.md": {
+    "files": [
+      [
+        "src/lsg/lsg-token-reference.js",
+        "js",
+        "Script \"LsgTokenReference\" in <<LSG_MODULE>>, required by the TokenReference Block"
+      ],
+      [
+        "src/lsg/lsg-token-reference.css",
+        "css",
+        "the TokenReference Block's Style Sheet, in <<LSG_MODULE>>"
+      ]
+    ],
+    "mentor": {
+      "prompts": [
+        {
+          "title": "Prompt A — the TokenReference Block (<<LSG_MODULE>>)",
+          "text": "Goal: In ODC Studio, create the Live Style Guide Block TokenReference for the <<DESIGN_SYSTEM_NAME>> design system. It renders every design token of one kind, read live from the theme, through a provided script.\nModule: <<LSG_MODULE>>.\n\nContext (already done manually — do NOT re-create or edit these):\n- dist/theme.css is pasted into the theme of <<THEME_MODULE>>, which this module uses.\n- lsg-token-reference.js is imported in this module as a Script named \"LsgTokenReference\". It defines window.LsgTokenReference with init, update and destroy.\n- Do NOT author or modify JavaScript beyond the three one-line calls below, and do NOT edit the Theme.\n\nTask — create these elements, referencing each by the exact name given:\n\n1. A Static Entity \"TokenKind\" with a single Text attribute \"Value\" set as the record Identifier (delete the default Id, Label, Order and Is_Active attributes), and these records:\n     Color = \"color\", FontSize = \"font-size\", FontWeight = \"font-weight\", Space = \"space\",\n     Radius = \"radius\", BorderSize = \"border-size\", Shadow = \"shadow\"\n2. A Block \"TokenReference\", in a UI Flow named \"StyleGuideReferences\", with:\n   - input parameters: Kind (TokenKind Identifier, mandatory), Heading (Text), Filter (Text), Exclude (Text);\n   - one Placeholder named \"Intro\";\n   - Required Scripts: the one Script \"LsgTokenReference\". Do not load it any other way.\n3. The Block's widget tree, exactly:\n     Container \"Root\", Style Classes \"lsg-token-ref\"\n       If Heading <> \"\": an HTML Element with Tag \"h2\", Style Classes \"lsg-token-ref__heading\", containing an Expression = Heading\n       Container, Style Classes \"lsg-token-ref__intro\", containing the Placeholder \"Intro\"\n       Container \"Body\", empty — the script renders into it at runtime\n4. Three Block event handlers, each a Client Action with one \"Run JavaScript\" node. Give each node a Text input WidgetId = Body.Id; OnReady and OnParametersChanged also take Kind, Filter and Exclude as inputs. Paste exactly:\n     OnReady:             LsgTokenReference.init($parameters.WidgetId, { kind: $parameters.Kind, filter: $parameters.Filter, exclude: $parameters.Exclude });\n     OnParametersChanged: LsgTokenReference.update($parameters.WidgetId, { kind: $parameters.Kind, filter: $parameters.Filter, exclude: $parameters.Exclude });\n     OnDestroy:           LsgTokenReference.destroy($parameters.WidgetId);\n5. Paste the provided lsg-token-reference.css into the Block's Style Sheet, unchanged.\n\nOutSystems UI rules to follow: never edit the OutSystems UI module; never paste HTML into an Expression or an HTML Element; store nothing on $public.\n\nAfter generating, list every element you created by name, and flag anything you could not finish.\nStart with steps 1 and 2 and show them to me before building the widget tree."
+        },
+        {
+          "title": "Prompt B — the Styles screens (<<LSG_MODULE>>)",
+          "text": "Goal: In ODC Studio, put the TokenReference Block on the Styles screens of the Live Style Guide for the <<DESIGN_SYSTEM_NAME>> design system.\nModule: <<LSG_MODULE>>.\n\nContext: the Block TokenReference and the Static Entity TokenKind already exist in this module (previous prompt). Do NOT edit them, and do NOT write CSS or JavaScript.\n\nTask:\n1. On each Styles screen, inside the layout's MainContent placeholder, place TokenReference with:\n     Colors        Kind = Entities.TokenKind.Color\n     Typography    Kind = Entities.TokenKind.FontSize, then a second instance with Kind = Entities.TokenKind.FontWeight and Heading = \"Font weights\"\n     Spacing       Kind = Entities.TokenKind.Space\n     Border radius Kind = Entities.TokenKind.Radius\n     Border size   Kind = Entities.TokenKind.BorderSize\n     Shadow        Kind = Entities.TokenKind.Shadow\n   If a screen does not exist yet, create it in the same flow as the other Styles screens, on the module's default layout, and add it to the menu the same way the existing Styles screens are.\n2. Move each screen's intro text (and on Colors, the brand narrative) into the Block's Intro placeholder. Remove any hand-built swatch, scale or table the Block now renders.\n\nAfter generating, list each screen, the Block instance(s) on it with their Kind, and every widget you removed."
+        }
+      ]
+    }
+  }
 }
