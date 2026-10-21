@@ -1,31 +1,10 @@
 #!/usr/bin/env node
 /* check-state.mjs — structural guard for loop/state.json and the findings register.
  *
- * WHY THIS EXISTS. `check-stylesheets.mjs` was written because a conflict boundary fell
- * inside a CSS rule three times and silently deleted a section. This is the same story in
- * a different file, and it has now happened three times too:
- *
- *   1. A maker minted FND-033..036 at build time while another branch had already
- *      committed 033 and 034 for different findings. Ten citations shipped in six files.
- *   2. Merge c85f283 took main's state.json and re-applied the pat-top-menu-bar ITEM but
- *      not its four findings[] entries. Four findings were silently deleted and the loss
- *      shipped to main in da14ac3. It was caught by hand, days later, and only because
- *      somebody happened to read the entries back while allocating IDs.
- *   3. FND-035..038 were then filed correctly — IDs taken at filing time, not build time —
- *      and STILL collided, because cmp-table and cmp-overlays filed in parallel between
- *      the counter being read and the branch being pushed. Renumbered to 045..048.
- *
- * `state.json` is the one file every item writes and NOTHING READS. Not the build, not the
- * gate, not the checker. That is exactly why these went unnoticed: a corrupted stylesheet
- * eventually renders wrong, whereas a dropped findings entry produces no symptom at all.
- * Case 2 nearly cost a real finding — FND-047 is the same defect as issue #54 reached from
- * the opposite direction, and had it stayed lost, #54 would have been the only record and
- * would have read as a screen bug rather than a header one.
- *
- * WHAT IT CANNOT DO. It cannot stop two branches allocating the same ID in parallel; only
- * a lock or a merge queue can, and neither is worth it here. Taking IDs at filing time
- * narrows the window. This catches the collision at the merge, which is the next best
- * thing and is where all three were actually detectable.
+ * state.json is written by every item and read by nothing else, so a merge that drops a
+ * findings entry, or two branches allocating the same FND id, has no rendered symptom. This
+ * catches both at the merge. It cannot stop parallel allocation; taking ids when the register
+ * row is written, from origin/main's counter, narrows that window.
  *
  * Usage:
  *   node build/check-state.mjs            # invariants + "nothing disappeared" vs HEAD
@@ -85,9 +64,8 @@ for (const [label, list, key] of [
 }
 
 /* ── 2. every finding points at an item that exists ─────────────────────────── */
-/* THE INVARIANT c85f283 BROKE. findings[] and items[] are two arrays joined only by this
- * key, which is why "re-apply the item" and "re-apply the item's findings" are two
- * operations and why doing only the first loses data with no symptom. */
+/* findings[] and items[] are joined only by this key: re-applying an item in a merge without
+ * its findings loses them silently. */
 for (const f of findings) {
   const item = f?.item;
   if (!item) continue;
@@ -117,14 +95,8 @@ if (existsSync(REGISTER)) {
 
   const allocated = findings.map((f) => f?.id).filter((id) => /^FND-\d{3}$/.test(id ?? ""));
 
-  /* WARNING, not a failure — deliberately, and this should tighten later.
-   *
-   * On the first run this fired on six entries: FND-017, which is `withdrawn` and IS
-   * documented, just as a prose section rather than a table row; and FND-035..039, which
-   * `cmp-table` and `cmp-overlays` raised in state.json and never wrote rows for. The
-   * second is real drift and worth surfacing. Neither is a reason to red-light everybody
-   * else's build on the day this guard lands, and a guard that arrives already failing is
-   * a guard people learn to skip. Promote to fatal once the backlog is clear. */
+  /* A warning, not a failure, so an existing project can adopt the check and catch up.
+   * withdrawn / not-reproduced findings are documented as prose, not table rows. */
   const DOCUMENTED_ELSEWHERE = new Set(["withdrawn", "not-reproduced"]);
   for (const f of findings) {
     const id = f?.id;
@@ -147,7 +119,7 @@ if (existsSync(REGISTER)) {
       problems.push(
         `the register's counter is STALE: Next ID reads FND-${String(counter).padStart(3, "0")} ` +
           `but FND-${String(highest).padStart(3, "0")} is already taken. ` +
-          `The next person to file will collide — this is how FND-033/034 and FND-035..038 both happened.`
+          `The next person to file will collide with an existing id.`
       );
     }
   }
@@ -205,18 +177,9 @@ if (existsSync(MAP)) {
 }
 
 /* ── 5. nothing disappeared since HEAD (and since MERGE_HEAD, mid-merge) ────── */
-/* This is the check that would have caught c85f283 AT THE MERGE rather than days later. */
-/* IDENTITY, NOT ID — and this distinction is the whole point.
- *
- * The four entries c85f283 deleted were `id: "UNALLOCATED"`, because IDs are taken at
- * FILING time, not build time. A guard keyed on FND-NNN would sail straight past the very
- * incident this check exists for. So an entry is identified by its id when it has one and
- * by item+class when it does not, which is stable across a merge and across allocation —
- * renumbering FND-035 to FND-045 keeps `pat-top-menu-bar::top-menu / no-device-frame`
- * intact, so a legitimate renumber does not read as a deletion.
- *
- * Counting is not enough either: 32 was a perfectly plausible number for the file that had
- * just lost four entries. */
+/* An entry is identified by its id when it has one and by item + class when it is still
+ * UNALLOCATED, so a legitimate renumber is not read as a deletion and an unallocated entry
+ * is still tracked. A count is not enough: a file can lose four entries and look plausible. */
 function keyOf(f) {
   const id = f?.id;
   if (/^FND-\d{3}$/.test(id ?? "")) return `id:${id}`;
@@ -252,8 +215,7 @@ if (useGit) {
     const k = keyOf(f);
     if (k) nowFindings.add(k);
   }
-  /* A renumber keeps the id-key but changes it, so also index by the unallocated-shape key
-   * to avoid flagging "FND-035 vanished" when it simply became FND-045. */
+  /* Also index by item + class, so a renumbered finding does not read as vanished. */
   const nowByContent = new Set(
     findings.map((f) => `${f?.item ?? "?"}::${f?.class ?? f?.type ?? "?"}`)
   );
@@ -299,10 +261,8 @@ if (useGit) {
 }
 
 /* ── 6. is our counter behind origin/main's? — catch the CAUSE, not the symptom ─ */
-/* All three collisions were a correct-looking counter read from a tree that had moved on.
- * A duplicate check catches it after two branches have both filed; this catches it while
- * you still have a chance to allocate from the right number. Suggested by the session that
- * caused collision #2 and then very nearly caused #4 the same way. */
+/* A counter read from a stale tree is the usual cause of an id collision; this catches it
+ * before anything is filed. */
 if (useGit && existsSync(REGISTER)) {
   const localNext = readFileSync(REGISTER, "utf8").match(/Next ID:\s*FND-(\d+)/);
   try {
@@ -317,8 +277,7 @@ if (useGit && existsSync(REGISTER)) {
       problems.push(
         `the counter is BEHIND origin/main: this branch reads Next ID FND-${localNext[1]} but ` +
           `origin/main reads FND-${remoteNext[1]}. Any id you allocate from here is already taken. ` +
-          `This is the cause of all three collisions in this repo — re-read the counter from ` +
-          `origin/main and renumber before pushing.`
+          `Re-read the counter from origin/main and renumber before pushing.`
       );
     }
   } catch {
@@ -337,10 +296,7 @@ if (problems.length) {
   console.error("\ncheck:state FAILED — loop/state.json or the findings register is inconsistent.\n");
   for (const p of problems) console.error(`  ✗ ${p}`);
   console.error(
-    "\n  state.json is the one file every item writes and nothing else reads, so a defect\n" +
-    "  here has NO rendered symptom and no other gate will catch it. Three ID collisions\n" +
-    "  and one silent deletion of four findings reached main before this check existed.\n\n" +
-    "  If you are resolving a merge: take one side, then re-apply the other side's\n" +
+    "\n  If you are resolving a merge: take one side, then re-apply the other side's\n" +
     "  items[] entry AND every findings[] entry whose `item` points at it. They are two\n" +
     "  arrays joined by one key, so doing only the first loses data quietly.\n"
   );

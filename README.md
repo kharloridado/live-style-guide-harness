@@ -52,7 +52,7 @@ Figma" — and review it from the Artifact link on its PR. `CLAUDE.md` has the r
   `extraKnownMarketplaces.live-style-guide-loop` in `.claude/settings.json` at the fork. Keep the plugin
   name so the skill names stay the same.
 - **Nothing project-specific lives outside `project.config.json`.** Class prefix, repo, Figma file,
-  tenant and conventions are read from it at build time and by every skill.
+  and tenant are read from it at build time and by every skill.
 
 ## Pulling template improvements into a project
 

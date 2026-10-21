@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 /* validate-theme.mjs — make the deterministic gate actually deterministic.
  *
- * The @checker treats `npm run build:theme` exiting 0 as a HARD WALL: proof that the
- * tree builds before any subjective review happens. That claim was false. build-theme.mjs
- * is a text assembler — it concatenates and re-sections CSS, it never parses it. An
- * unbalanced brace in a token file produced a corrupt dist/theme.css and still exited 0,
- * so a broken theme could sail through the gate and get reviewed as if it were fine.
- *
- * This closes that hole. Two checks, both mechanical, both un-reasoned-past:
+ * build-theme.mjs concatenates CSS and never parses it, so this is what makes
+ * `npm run build:theme` exiting 0 mean the theme is sound. Two checks:
  *
  *   1. SYNTAX — parse the assembled theme with lightningcss. A parse error is a build
  *      failure, full stop.
@@ -27,10 +22,6 @@ const css = readFileSync(themeFile, "utf8");
 const errors = [];
 
 /* ---- 1a. structure: balanced braces + terminated comments ------------------------ */
-/* The scanner moved to build/lib/css-structure.mjs when it turned out to be needed on
- * every hand-edited stylesheet, not just the assembled theme — check-stylesheets.mjs is
- * the other caller. The reasoning for checking this by hand rather than with a parser,
- * and the three times it has cost this project, are documented there. */
 const structural = checkStructure(css, "dist/theme.css");
 if (structural) errors.push(`dist/theme.css is structurally broken: ${structural}`);
 
@@ -93,24 +84,13 @@ const defined = new Set([...code.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
 
 /* …PLUS every token OutSystems UI itself declares.
  *
- * WHY THIS IS NOT A LOOSENING. The original check only knew what dist/theme.css declares,
- * which was right while the theme was nothing but token files: a token layer that
- * references a name it never defines is broken. It stops being right the moment
- * src/blocks/*.css joins the build. In ODC the theme is pasted BELOW OutSystems UI, so
- * the framework's ~600 custom properties are genuinely in scope, and the whole point of a
- * block override is to consume them — `var(--space-s)`, `var(--font-regular)`,
- * `var(--border-size-l)`. Under the theme-only model the only ways to pass were to hard-
- * code a literal fallback (hard rule 3: never hard-code a design value) or to restate the
- * framework's own value in a token file (which tokens/index.css forbids: a --wf- token is
- * for something OutSystems UI does not have). Both are worse than the problem.
+ * In ODC the theme is pasted below OutSystems UI, so the framework's custom properties are in
+ * scope and block overrides are meant to consume them (`var(--space-s)`). Reading the compiled
+ * base also catches a typo'd framework token (`--space-md`) — the same file the specimen pages
+ * load, so the validator and the gate agree on what exists.
  *
- * Reading the real compiled base instead makes the check STRICTER for block CSS, not
- * looser: a typo'd framework token name — `--space-md`, `--font-weight-regular` — is now
- * caught, where before it simply was not examined. The source is the same file every specimen
- * page loads, so the validator and the gate agree on what exists.
- *
- * If the base has not been compiled yet (`npm run build:osui`), fall back to theme-only
- * and say so out loud rather than silently passing everything.
+ * If the base has not been compiled yet (`npm run build:osui`), any dangling reference is
+ * reported as that one setup step rather than as undefined tokens.
  *
  * HARVEST SCOPE — `:root` / `html` / `body` ONLY, never "anywhere in the file".
  * OutSystems UI declares ~69 custom properties inside SCOPED rules that a theme-level

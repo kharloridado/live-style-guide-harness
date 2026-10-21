@@ -17,20 +17,11 @@
   },
 
   "platformKnowledge": {
-    "$comment": "OutSystems' own frontend-skills pack at vendor/outsystems-frontend-skills. Every skill in the lsg plugin reads platform facts (block names, arguments, CSS variables, utility classes, WCAG-to-widget mapping) from there instead of carrying its own copy — see ARCHITECTURE.md in that plugin. `mode` is `vendored-copy` while we lack access to the upstream repo, and `submodule` once we have it; the path does not change either way. A `vendored-copy` has no commit and cannot be diffed against upstream, so it is a stopgap with a cost, not a choice — see vendor/outsystems-frontend-skills/VENDORED.md.",
+    "$comment": "OutSystems' frontend-skills pack at vendor/outsystems-frontend-skills, which the lsg plugin reads for platform facts. `vendored-copy` until the upstream repo can be a pinned `submodule`; the path is the same either way. Never edit it.",
     "mode": "vendored-copy",
     "repo": null,
     "pin": null,
     "obtained": "2026-08-19"
-  },
-
-
-  "conventions": {
-    "$comment": "THREE-STATE, never a bare value. status: confirmed | assumed | TBD. A convention that is not `confirmed` is NOT A RULE: the checker must not enforce it and must not raise findings against it. This exists because a previous template shipped `Spacing base: 4pt` as a plausible default nobody had verified — the loop then flagged every value that wasn't a multiple of 4, manufacturing false-positive findings and a bug that had to be closed as not-planned. A credible-looking default is worse than a blank. Promote to `confirmed` only when the designer or brand owner has actually said so.",
-    "spacingBase": { "value": null, "status": "TBD" },
-    "grid": { "value": null, "status": "TBD" },
-    "breakpoints": { "value": null, "status": "TBD" },
-    "defaultComponentSize": { "value": null, "status": "TBD" }
   },
 
   "knownFalsePositiveClasses": [],

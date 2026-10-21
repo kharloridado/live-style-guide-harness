@@ -27,18 +27,12 @@ _boolAttr(name, fallback = false) {
 }
 ```
 
-**Why:** a component shipped with a "dismissible" flag that could not be turned off — the attribute
-was present with value `"false"` and the component only checked presence.
-
 ### 2. Never hand-type an element id — bind the widget's runtime `.Id`
 
 The platform mangles ids at compile time. An id you see in the browser inspector is not stable across
 publishes, and one you invent in JS or CSS will not match the rendered widget. When a component or
 script must point at a widget, pass the widget's **runtime `.Id`** through an input parameter. The same
 goes for `for` / `aria-labelledby` / `aria-controls` wiring: bind the runtime id, never a typed string.
-
-**Why:** hand-typed ids in a handover worked in the local harness and silently pointed at nothing once
-published.
 
 ### 3. Type enumerable Block inputs as Static Entities, not free Text
 
@@ -47,9 +41,6 @@ Entity**, not `Text`. Free text gives the consuming developer no autocomplete, n
 no discoverability, and it no-ops silently when someone types `"Regular"` where the CSS expects
 `"regular"`. Enumerate it and the platform validates it for you.
 
-**Why:** size and variant inputs typed as `Text` rendered the base style, with no error, whenever the
-string did not match exactly.
-
 ### 4. Never let a border resize a component — paint edges with an inset `box-shadow` or `outline`
 
 A 1px border adds 2px of height. A component with a pinned height and a real `border` is 2px taller
@@ -57,9 +48,6 @@ than its spec, and one that grows a border on hover or focus jumps by 2px. Both 
 and both are easy to miss in a static screenshot. Any edge that appears, changes width, or changes on
 state is an **inset `box-shadow`** or an **`outline`** — they paint without taking part in layout — and
 the component's height is pinned explicitly.
-
-**Why:** a status badge was 2px taller than the mockup at every size, traced to a genuine 1px border
-where the design intended a painted edge.
 
 ### 5. Never select on a framework runtime utility class — target elements structurally
 
@@ -72,19 +60,12 @@ role in the DOM.
 Corollary: empty placeholders are already zero-size. There is nothing to collapse — do not write CSS to
 collapse them.
 
-**Why:** one selector keyed on the framework's empty-placeholder class removed every native breadcrumb
-separator across the application, because the class sat on elements that were not, in any design
-sense, "empty".
-
 ### 6. Use the framework's device classes, not your own `@media` breakpoints
 
 The framework has its own responsive breakpoints and its own view of where tablet and phone begin. Raw
 `@media (max-width: …)` rules will disagree with it somewhere, and the disagreement zone is where the
 layout looks broken. Use the framework's device classes (`.tablet` / `.phone` on `<body>`), which it
 applies consistently across every widget you sit on top of.
-
-**Why:** hand-rolled breakpoints in a layout override desynchronised from the framework's navigation
-collapse, leaving a window width at which the desktop and mobile navigation both showed.
 
 ### 7. Leave `@font-face` src paths alone — ODC rewrites them, and a 404 on the authored path is expected
 
@@ -97,9 +78,6 @@ prefix onto the committed faces, so `dist/theme.css` stays byte-identical to the
 If text renders in a fallback face — classically a serif where the brand sans is expected — the cause is
 almost always a **missing `@font-face` declaration**: a weight or style in use that was never declared.
 Check the declared faces against the weights actually used before touching a URL.
-
-**Why:** a serif fallback was diagnosed as a broken font path, and the "fix" — rewriting the `src` — made
-it worse. The real cause was an undeclared 500-weight face.
 
 ### 8. Restyle the framework's own widget first — build a Web Component only as the last resort
 
@@ -116,10 +94,6 @@ classes, and introduce a `<<CLASS_PREFIX>>` class only for a role the framework 
 Block overrides are delivered as `src/blocks/*.css`, registered in `src/blocks/index.css`. Specimen
 pages link every file in `src/blocks/index.css` automatically; a block missing from that manifest is
 missing from ODC too.
-
-**Why:** a from-scratch button system, a from-scratch card system and a from-scratch set of colour
-utility classes were all built, reviewed, and then **reversed** — each replaced by an override of the
-framework's own class. Three components' worth of work, spent twice.
 
 ### 9. Anchor every restyle on the framework's real structure — the frontend-skills pack first, the SCSS for intent
 
@@ -162,15 +136,10 @@ The traps, all hit on this project:
 - **Published ODC pages load a stylesheet neither vendored source contains: `OutSystemsReactWidgets`.**
   It declares its own `[data-checkbox]::before` (`display: table`, full size, a `#bdc5c7` background,
   `opacity: 0 → 1` on `:checked`). It sits below OutSystems UI and the theme in the cascade, so our
-  declarations win, but it is live on every page — see `build/gate/LESSONS.md` §2.13.
+  declarations win, but it is live on every page and the harness does not load it.
 - **The platform wraps the Checkbox input in a bare `<span>` and gives it `class="checkbox"` as well as
   `data-checkbox`.** The span breaks any layout that assumes the input is a direct flex child;
   a restyle is safe only when it positions the input absolutely or selects it as a descendant.
-
-**Why:** restyles written against the vendored SCSS alone produced a doubled tooltip bubble, a
-mispositioned arrow and a pile of dead rules that matched nothing — each obvious the moment someone
-looked at the rendered element — and a multi-select restyle rendered wrong three times running, each
-time because it was written against the SCSS rather than the DOM the provider actually produced.
 
 ## This project's ODC environment
 

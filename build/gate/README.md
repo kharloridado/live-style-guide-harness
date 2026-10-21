@@ -71,57 +71,36 @@ git submodule update --init && npm run build:osui
 path is not the path that ships (`specs/foundations/platform.md` §7). Those requests are recorded with
 `critical: false` and do not invalidate the viewport; **every other font stays critical.**
 
-Without it the rule is self-defeating: the first project to self-host a font invalidates every
-viewport forever, and a gate that always fails is a gate nobody reads.
+**Serve the fonts locally rather than leaning on the exemption.** `build/lib/virtual-origin.mjs`
+maps the `/<odcThemeModule>/` prefix onto the faces committed under `vendor/fonts/`, so one authored
+path resolves in ODC and in the harness, and the gate measures the face the product renders. If a
+font 404s here, wire up the alias before accepting the fallback, then re-judge any baseline that
+was measured on the fallback face.
 
-**The exemption is a safety net, not the intended state — serve the font locally instead.**
-This section used to argue the exemption was *safe* because a self-hosted font could never resolve
-in the harness, so the fallback face was "the same face the harness has always measured" and the
-baseline still described the rendered page. That reasoning was wrong in a way worth recording: it
-made the harness measure a typeface **the product does not ship**, and the damage was not
-hypothetical — `cmp-link`'s font-metric probe had to be recorded `status: "unmeasured"` because its
-value depended on whether the runner had network egress to Google at measure time (`build/gate/LESSONS.md` §2.8),
-and a `pat-wizard` geometry baseline was captured under Arial metrics and read as a regression the
-moment Roboto arrived.
+### Writing probes
 
-So `build/lib/virtual-origin.mjs` maps the `/<odcThemeModule>/` prefix (read from
-`project.config.json`) onto the committed faces in `vendor/fonts/roboto/`. One authored path
-resolves in **both** contexts: `dist/theme.css` stays byte-identical to what is pasted into ODC,
-and the harness measures the face the product actually renders. That is what `build/gate/LESSONS.md` §2.8 means by
-"re-arm it by making the font deterministic, then re-judge".
+A probe is a claim about what **this item's override owns**. Before pinning a value, ask what would
+have to change for it to move; if the answer includes the theme, a webfont or another item's
+specimens, the number is not the claim — find the claim.
 
-The exemption stays for the cases the alias does not cover — a project that has not yet committed
-its faces, or a face served from somewhere else — but if a font 404s in this harness, the first
-question is whether the alias is wired up, not whether to accept the fallback.
-
-### Probe file
-
-```json
-{
-  "waitFor": ".prefix-button",
-  "viewports": [{ "name": "desktop", "width": 1280, "height": 900 },
-                { "name": "mobile",  "width": 375,  "height": 812 }],
-  "probes": [
-    { "name": "primary / fill", "selector": ".btn.is-primary",
-      "props": ["background-color", "color", "font-size", "border-radius"] },
-    { "name": "primary / box",  "selector": ".btn.is-primary", "rect": true },
-    { "name": "icon glyph",     "selector": ".btn .icon", "pseudo": "::before", "ink": true },
-    { "name": "registered",     "js": "!!customElements.get('x-toast')" }
-  ]
-}
-```
-
-- `props` — `getComputedStyle`; add `"pseudo": "::before"` for generated content.
-- `rect` — `getBoundingClientRect`, for boxes and gaps.
-- `ink` — paints the codepoint to a canvas and takes its **alpha bounding box**. Design
-  tools inset a glyph inside its em box (icon-font ink is typically ~62.5% of the em), so
-  `font-size` alone proves nothing about what the eye sees.
-- `js` — escape hatch for anything the above cannot express.
-- `index` — disambiguates when a selector matches several elements.
-
-Optional top-level `url` (defaults to the item's specimen page) and `waitFor`.
-
-**A ref row you did not probe is a row you did not check.**
+- **No page-wide questions.** A probe that enumerates or counts across the whole theme or document
+  (every `:root` property, every `.btn`, every rule in every sheet) goes red whenever any other item
+  lands. Scope it to the item's own section, class or sheet.
+- **Read selectors normalised.** `build/review/state-gate.js` rewrites `:hover` / `:active` /
+  `:focus` / `:focus-visible` page-wide to `:is(:hover, .<prefix>gate-hover)`. Strip that wrapper
+  before comparing `selectorText`.
+- **Every block rule is on the page twice** — once inside `dist/theme.css`, once from its own
+  `src/blocks/` file. A test that deletes a rule from the CSSOM must delete both copies.
+- **No geometry on moving elements.** A rotating or animating element has no stable rect; assert its
+  computed style instead.
+- **Measure all three device rungs.** OutSystems puts `tablet` on `<body>` at a 1024px window, so
+  `.tablet`-scoped framework rules fire on an ordinary laptop. Probe at desktop, tablet and phone.
+- **Specimen chrome ships nothing.** `<prefix>specimen__*` classes live in `build/review/specimen.css`,
+  not in the theme. Handover markup must never contain one.
+- **The harness is not the product.** No framework base means no framework collisions; ODC also loads
+  `OutSystemsReactWidgets`, which the submodule lacks (`specs/foundations/platform.md`). Anything
+  the harness supplies that ODC does not, or the reverse, is a defect waiting at paste time.
+- **A baseline restated by hand goes through CI before it is trusted.**
 
 ## `compare-measurements.mjs`
 

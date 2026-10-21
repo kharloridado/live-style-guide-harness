@@ -2,7 +2,7 @@
 
 A map, not a manual: the rules below are the ones no script enforces; everything else is a pointer.
 Project **values** (class prefix, JS namespace, design-system name, ODC theme module, tenant, repo,
-Figma file, findings routing, conventions) live in [`project.config.json`](./project.config.json)
+Figma file, findings routing) live in [`project.config.json`](./project.config.json)
 and nowhere else — read it, never restate a value from it. Behaviour (skills, `maker` / `checker`,
 hooks) is the versioned **`lsg`** plugin ([live-style-guide-loop](https://github.com/kharloridado/live-style-guide-loop)); fix the plugin, not a local copy.
 
@@ -37,8 +37,9 @@ Implementation-level accessibility that does not change the visual design — fo
 design's own colours, keyboard handlers, ARIA, semantic HTML, reduced motion, labels — is applied
 without a finding.
 
-**Conventions are three-state** (`confirmed | assumed | TBD`). Only `confirmed` is a rule: never
-enforce, or raise a finding against, an `assumed` or `TBD` convention.
+Spacing scale, grid, breakpoints and default sizes are rules only when written in
+`specs/foundations/` or `specs/decisions.md`. Never assume one, and raise no finding against an
+unwritten one.
 
 ## Where things are
 
@@ -52,7 +53,7 @@ src/components/   vanilla JS Web Components (L5 only)
 build/            theme build and checks, token audit, release, gate/ (fidelity), review/ (Artifacts)
 findings/         the register (FND-NNN) and ticket payloads — findings/README.md
 handover/         developer handover bodies with the code to paste embedded
-loop/             goal.md (queue runs), state.json (an index, not an authority), LESSONS.md
+loop/             goal.md (queue runs) and state.json (an index, not an authority)
 vendor/           OutSystems UI submodule, frontend-skills pack, fonts — read, never edit
 CHANGELOG.md      release notes — the one file the owner reads; write entries for a person
 ```
@@ -72,7 +73,8 @@ CHANGELOG.md      release notes — the one file the owner reads; write entries 
 
 A fresh clone or worktree needs `npm install`, `git submodule update --init vendor/outsystems-ui`
 and `npm run build:osui` before any gate or review command; the plugin's session hook names
-whatever is missing.
+whatever is missing. A background or scheduled run gets its own worktree, and every commit stages
+explicit paths — two sessions in one tree commit each other's half-finished work.
 
 ## Review Artifacts
 

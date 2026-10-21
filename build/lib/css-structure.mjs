@@ -1,31 +1,12 @@
 /* css-structure.mjs — balanced braces and terminated comments, by hand.
  *
- * Lifted out of build/validate-theme.mjs, which had it inline and applied it to
- * dist/theme.css only. It now has two callers, because the failure it catches turned out
- * not to be specific to the assembled theme at all.
+ * Used on dist/theme.css (validate-theme.mjs) and on every hand-edited stylesheet
+ * (check-stylesheets.mjs).
  *
- * WHY BY HAND, AND NOT WITH A PARSER. A CSS parser will not report this. An unclosed rule
- * is not a syntax error: the parser treats everything that follows as further declarations
- * of that rule, finds them invalid, and drops them — silently. The stylesheet still loads,
- * still reports a non-zero `cssRules.length`, and simply misses every rule in the swallowed
- * region. Nothing throws, nothing warns, and the page just renders wrong.
- *
- * WHAT IT COST BEFORE IT EXISTED. Three separate occurrences in this project, all from the
- * same cause: a hand-resolved merge conflict whose boundary fell INSIDE a rule, leaving it
- * open and swallowing the next item's whole chrome section.
- *
- *   1. cmp-input onto cmp-checkbox — `.wf-preview__variant-name` left open, swallowing
- *      `.wf-preview__grid`. The input's specimens fell out of their three-up grid and
- *      measured 324px -> 1020px, which read as a fidelity regression in the component.
- *   2 & 3. The primitives merges — `.wf-preview__stack--tall` and `.wf-preview__spinner`
- *      left open, swallowing the cmp-button and cmp-link sections. `.wf-preview__icon`
- *      disappeared, the button's icon stand-ins had no size at all, and the gate reported
- *      eight "element has a zero-size box" regressions against a component whose CSS was
- *      perfectly fine. `main` stayed red across three runs.
- *
- * In all three the stylesheet was structurally broken and NOTHING in the build said so:
- * validate-theme.mjs ran this exact check, but only on dist/theme.css, and the chrome sheet is
- * not in it. The check was right; its scope was wrong.
+ * Not a CSS parser, on purpose: an unclosed rule is not a syntax error. The parser reads what
+ * follows as more declarations of that rule and drops them silently, so the page renders
+ * without them and nothing reports it. The usual cause is a merge conflict resolved across a
+ * rule boundary.
  */
 
 /** @returns {string|null} a human-readable problem, or null when the file is sound. */

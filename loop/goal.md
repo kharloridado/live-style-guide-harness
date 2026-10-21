@@ -29,9 +29,7 @@ The loop builds only what is in this table. A component that is in Figma but not
 Order rows by dependency: foundations → primitives → composites → patterns. A row with no Figma
 node and no written spec cannot be built (no ref, no build).
 
-**Why this is required:** on the project this template came from, a component set was built end to
-end and then thrown away, because no confirmed list existed and the client's real list was
-different.
+Building outside a signed list is how finished components get thrown away.
 
 ## Figma scope
 

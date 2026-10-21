@@ -18,23 +18,13 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      # THIS repo is the scaffold everyone clones, so its project.config.json holds
-      # <<PLACEHOLDER>> values BY DESIGN and check:config is supposed to fail here.
-      # Letting it fail anyway would leave the template's default branch permanently
-      # red, and a CI badge that is always red teaches people to stop reading it — at
-      # which point it misses the real regression too. That is the same failure mode
-      # the fidelity diff's geometry tolerance exists to avoid.
-      #
-      # GitHub's own "Template repository" flag, not a hard-coded name, so a team that
-      # copies this scaffold into its own org gets the same behaviour. A project generated
-      # from the template is never flagged, so it always gets the full gate.
+      # The template itself holds <<PLACEHOLDER>> values by design, so the config-dependent steps
+      # skip on a repo GitHub flags as a template. A generated project is never flagged.
       IS_TEMPLATE: ${{ github.event.repository.is_template == true }}
     steps:
       - uses: actions/checkout@v4
         with:
-          # vendor/outsystems-ui is the real OutSystems UI base every specimen page
-          # stacks under the theme. Without it every stylesheet 404s, the cascade falls
-          # back, and the gate measures a page nobody will ever see.
+              # vendor/outsystems-ui: the framework base every specimen page stacks under the theme.
           submodules: recursive
 
       - uses: actions/setup-node@v4
@@ -44,72 +34,37 @@ jobs:
 
       - run: npm ci
 
-      # Proves the harness itself works — browser launches, pages are served, probes
-      # read computed style — independently of any project state. It runs FIRST and
-      # depends on nothing the project configures, so a red X here always means the
-      # harness, never the config. This runs on the template too: it is the step that
-      # actually needs guarding here, because the gate is what the template ships.
+      # Proves the harness works (browser, server, probes) independently of project state.
       - name: gate self-test
         run: npm run gate:selftest
 
       # The drift guard: no surviving <<PLACEHOLDER>>, no leaked example prefix,
-      # conventions well-formed, .mcp.json's tenant agreeing with project.config.json.
+      # .mcp.json's tenant agreeing with project.config.json.
       # Skipped only on the template itself — see IS_TEMPLATE above.
       - name: check:config
         if: env.IS_TEMPLATE != 'true'
         run: npm run check:config
 
-      # Structural guard for every HAND-EDITED stylesheet, not just the assembled theme.
-      # An unclosed rule is not a syntax error: the parser reads what follows as more
-      # declarations of that rule, drops them, and reports nothing — so the page silently
-      # renders without a whole section. It has happened three times here, every one of
-      # them a merge conflict resolved across a rule boundary, and the last one kept main
-      # red for three runs while the gate blamed a component whose CSS was fine.
-      # Reads no project config, so it runs on the template too.
+      # Every hand-edited stylesheet closes its blocks; an unclosed rule silently drops the rest.
       - name: check:stylesheets
         run: npm run check:stylesheets
 
-      # Builds review/vendor/outsystems-ui/outsystems-ui.css from the submodule.
-      # Reads no project config, so it runs everywhere.
-      #
-      # MUST run BEFORE build:theme. `npm run build:theme` chains validate-theme.mjs,
-      # which resolves every var(--token) in the assembled theme — and a block override
-      # legitimately borrows framework-owned tokens (--color-neutral-0, --space-m) that
-      # OutSystems UI declares and we do not. Without this compiled base the validator
-      # has nothing to resolve them against and reports them as dangling: 14 false
-      # errors that failed three checker-PASSED items (#9, #12, #14) for a file that
-      # was simply not built yet. The validator says so itself in that run's output —
-      # "outsystems-ui.css is missing, so framework tokens cannot be resolved" — and it
-      # was read as a component defect because the gate is a hard wall by design.
-      #
-      # It stayed invisible on main because main carries no block CSS: token files
-      # DECLARE the names they use, so they validate fine with no framework present.
-      # The first item to borrow one is the first item to hit this.
-      #
-      # Anything that reads the compiled framework base belongs below this line.
+      # Must run before build:theme: validate-theme resolves the framework tokens that block
+      # overrides borrow against this compiled base. Anything that reads it belongs below.
       - name: build:osui
         run: npm run build:osui
 
-      # Assembles dist/theme.css, then validates it: balanced braces, parses as real
-      # CSS, and every var(--token) resolves — against the token layer AND the
-      # framework base compiled above. A dangling var() fails silently at runtime and
-      # renders subtly wrong with no error anywhere. Then the token audit: every visual
-      # literal in src/ is a token, or carries the finding or ref section that allows it.
-      # Chains check:config, so it cannot run on the template either.
+      # Assemble dist/theme.css, validate every var() against tokens + framework base, then the
+      # token audit. Chains check:config, so it skips on the template.
       - name: build:theme
         if: env.IS_TEMPLATE != 'true'
         run: npm run build:theme
 
-      # Re-measures every committed probes.json and diffs against its committed
-      # baseline. Computed strings diff exactly; geometry is compared with a
-      # tolerance and reported as informational. No-ops until the first item lands,
-      # which is why it is safe to run on the template.
+      # Re-measure every committed probes.json against its baseline. No-ops with no items.
       - name: fidelity regression
         run: npm run gate:regression
 
-      # Evidence, not a gate: the gates above already passed or failed. The library review
-      # page shows every item's measurements against its baseline, so a red run can be read
-      # in a browser. Non-blocking so an exhausted artifact quota cannot turn green red.
+      # Evidence, not a gate: the library review page, non-blocking.
       - name: review page
         if: always() && env.IS_TEMPLATE != 'true'
         continue-on-error: true

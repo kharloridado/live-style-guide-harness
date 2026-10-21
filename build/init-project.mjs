@@ -5,16 +5,6 @@
  * into project.config.json, and substitutes every <<PLACEHOLDER>> across the scaffold
  * docs. After this runs, `npm run check:config` passes and the build works.
  *
- * The whole point: you answer each question exactly once. The previous template made
- * you hand-edit the same value into several files, which is how it ended up shipping a
- * class prefix that two config files disagreed about for the life of the project.
- *
- * Note the deliberate refusal to guess. Conventions (spacing base, grid, breakpoints,
- * default size) default to status "TBD" — NOT to a plausible value. An unverified
- * convention that looks confirmed is worse than an obviously empty one: the loop will
- * enforce it, flag every value that "violates" it, and hand a human a queue of findings
- * that get closed as not-planned.
- *
  * Usage:  npm run init   (re-runnable; shows current values as defaults) */
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -59,6 +49,9 @@ Answer once — these values are written everywhere they are needed.
 `);
 
 const cfg = JSON.parse(readFileSync(CONFIG, "utf8"));
+/* First run on a fresh copy of the template: its release notes and version are the template's,
+ * not this project's, and are reset below. */
+const firstRun = JSON.stringify(cfg).includes("<<");
 const has = (v) => v && !/^<<.*>>$/.test(v);
 
 const customer = await ask("Customer (e.g. Acme Corp)", has(cfg.customer) ? cfg.customer : "", "customer");
@@ -113,13 +106,6 @@ if (odcTenant && !/^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/.test(odcTenant)) {
     `"${odcTenantRaw}" is not a plausible hostname. Expected something like acme.outsystems.dev.`
   );
 }
-
-console.log(`
-Conventions (spacing base, grid, breakpoints, default component size) start as "TBD"
-on purpose. Do NOT guess them. Promote one to "confirmed" in project.config.json only
-once the designer or brand owner has actually confirmed it — the checker enforces a
-convention only when it is confirmed, and raises findings against it only then.
-`);
 
 Object.assign(cfg, {
   customer, project,
@@ -188,6 +174,25 @@ function substitute(path) {
   }
 }
 for (const d of SCAN_DIRS) { const p = join(root, d); if (existsSync(p)) walk(p); }
+
+if (firstRun) {
+  const CHANGELOG = join(root, "CHANGELOG.md");
+  if (existsSync(CHANGELOG)) {
+    const log = readFileSync(CHANGELOG, "utf8");
+    const head = log.slice(0, log.search(/^## \[/m) === -1 ? log.length : log.search(/^## \[/m));
+    writeFileSync(CHANGELOG, head.trimEnd() + "\n\n## [Unreleased]\n");
+    console.log("  reset CHANGELOG.md — the template's release notes are not this project's");
+  }
+  for (const f of ["package.json", "package-lock.json"]) {
+    const path = join(root, f);
+    if (!existsSync(path)) continue;
+    const json = JSON.parse(readFileSync(path, "utf8"));
+    json.version = "0.0.0";
+    if (json.packages?.[""]) json.packages[""].version = "0.0.0";
+    writeFileSync(path, JSON.stringify(json, null, 2) + "\n");
+  }
+  console.log("  version reset to 0.0.0 — the first `npm run release -- minor` makes it 0.1.0");
+}
 
 await rl?.close();
 console.log(`

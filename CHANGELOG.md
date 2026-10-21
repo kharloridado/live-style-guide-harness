@@ -61,6 +61,8 @@ then clear what `check:state` now warns about.
 
 ### Changed
 
+- **`npm run init` on a fresh copy** resets `CHANGELOG.md` to an empty `[Unreleased]` and the
+  version to 0.0.0, so a new project does not inherit the template's release notes.
 - **Renamed to Live Style Guide Harness**, and its plugin to `lsg` (repo `live-style-guide-loop`).
   Commands are `/lsg:design-loop`, `@lsg:maker`, `@lsg:checker`. In an existing project, set
   `.claude/settings.json` → `enabledPlugins` to `"lsg@live-style-guide-loop": true` and point the
@@ -73,7 +75,6 @@ then clear what `check:state` now warns about.
 - **`loop/state.json` is an index** — items and findings only, with a fixed field list. Run
   settings (mode, tiers, pauses, max rounds) moved to `loop/goal.md`, which is now optional and only
   needed for queue runs. Figma URL, file key and repo are no longer copied into either file.
-- **Gate and CI lessons moved next to the gate**, in `build/gate/LESSONS.md` (same section numbers).
 - **`validate:theme`** reports a missing OutSystems UI base as one setup step to run, instead of
   dozens of misleading "undefined token" lines.
 - **CI** recognises the template by GitHub's *Template repository* flag rather than a hard-coded
@@ -82,6 +83,13 @@ then clear what `check:state` now warns about.
 
 ### Removed
 
+- **The `conventions` block** (`spacingBase`, `grid`, `breakpoints`, `defaultComponentSize` with
+  `confirmed | assumed | TBD`). No project ever confirmed one. Spacing, grid and breakpoint rules
+  are now enforced only when written in `specs/foundations/` or `specs/decisions.md`. Existing
+  projects can delete the block; `check:config` ignores it.
+- **`build/gate/LESSONS.md` and `loop/LESSONS.md`.** Their rules moved to `build/gate/README.md`
+  ("Writing probes"), `specs/README.md` and `CLAUDE.md`; the incident stories, client examples and
+  dated notes in build-script comments went with them.
 - **Board mode**: `loop/board-run.sh`, `.github/setup-project.sh`,
   `.github/migrate-project-status.sh`, the `deliverable` issue template, the `board` config block
   and its checks, and the `board:*` scripts. A merged PR is now the approval.

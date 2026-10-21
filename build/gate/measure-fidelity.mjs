@@ -48,27 +48,10 @@ const EXIT_NO_BROWSER = 4;
  * describing a page nobody will ever see. A 404 here invalidates the whole viewport. */
 const CRITICAL_RESOURCES = new Set(['stylesheet', 'font', 'script']);
 
-/* ONE EXEMPTION, and it is structural rather than a tolerance.
- *
- * A self-hosted webfont in the theme points at an ODC Resource — `/<odcThemeModule>/x.woff2`
- * — and ODC REWRITES that src at compile time. The authored path is not the shipped path, so
- * it CANNOT resolve in this harness: there is no ODC here to do the rewriting. A 404 on it is
- * the expected, permanent state of a correct theme (specs/foundations/platform.md §7), not a broken build.
- *
- * Left unexempted, the rule above is self-defeating: the first project to self-host a font
- * invalidates every viewport forever and the gate stops measuring anything. That is worse
- * than the failure it protects against, because a gate that always fails is a gate nobody
- * reads.
- *
- * Why it is safe to exempt THIS and nothing else. A missing stylesheet poisons every number
- * on the page — the whole cascade falls back. A missing font poisons only text metrics, and
- * it does so by falling back to the same face the harness has always measured, so the
- * baseline still describes exactly the page the harness renders. Fonts NOT under the theme
- * prefix stay critical: one that should resolve locally and does not is a real fault.
- *
- * The failure is still recorded in failedRequests with critical:false — exempt means "does
- * not invalidate", never "hidden". Read the module name from config, never restate it
- * (CLAUDE.md hard rule 8). */
+/* One exemption: a webfont under the theme's ODC Resource path (`/<odcThemeModule>/x.woff2`).
+ * ODC rewrites that src at compile time, so it cannot resolve here. It is recorded with
+ * critical:false instead of invalidating the viewport; every other font stays critical.
+ * Serving the faces from vendor/fonts/ (build/lib/virtual-origin.mjs) avoids the fallback. */
 const THEME_RESOURCE_PREFIX = '/' + projectConfig().odcThemeModule + '/';
 
 function isCritical(resourceType, url) {

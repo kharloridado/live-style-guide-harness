@@ -6,11 +6,6 @@
  * leaked the template's own example values into real code, cannot build — and therefore
  * cannot pass review.
  *
- * It exists because the last generation of this template shipped a plausible-looking
- * example prefix (`rnt-`) and a plausible-looking spacing base (`4pt`). Both were wrong.
- * The prefix silently contradicted itself across two config files for the life of the
- * project; the spacing base manufactured a batch of false-positive findings. Neither
- * failed anything loudly, so neither got caught.
  *
  * Usage:  node build/check-config.mjs
  * Exits non-zero (loudly) on any violation. */
@@ -44,24 +39,6 @@ if (cfg.classPrefix === EXAMPLE_PREFIX) {
 }
 if (cfg.classPrefix && !/^[a-z][a-z0-9]*-$/.test(cfg.classPrefix) && !PLACEHOLDER_RE.test(cfg.classPrefix)) {
   errors.push(`classPrefix "${cfg.classPrefix}" should be lowercase and end with a hyphen (e.g. "acme-").`);
-}
-
-/* ---- 3. conventions must be three-state, and only `confirmed` is a rule --------- */
-for (const [name, c] of Object.entries(cfg.conventions ?? {})) {
-  if (name === "$comment") continue;
-  if (!c || typeof c !== "object" || !("status" in c)) {
-    errors.push(
-      `conventions.${name} must be an object with a "status" of confirmed | assumed | TBD — ` +
-        `never a bare value. An unverified convention that looks like a rule is how false-positive findings get manufactured.`
-    );
-    continue;
-  }
-  if (!["confirmed", "assumed", "TBD"].includes(c.status)) {
-    errors.push(`conventions.${name}.status is "${c.status}" — must be confirmed | assumed | TBD.`);
-  }
-  if (c.status === "confirmed" && (c.value === null || c.value === undefined)) {
-    errors.push(`conventions.${name} is marked "confirmed" but has no value. Confirm it properly or set status back to TBD.`);
-  }
 }
 
 /* ---- 4b. the platform-knowledge pack must actually be on disk ------------------- */
@@ -121,14 +98,14 @@ function walk(dir) {
 function scan(path) {
   const rel = relative(root, path).replace(/\\/g, "/");
   // Docs that show the example prefix on purpose (templates, the Mentor prompt, history).
-  const isExampleDoc = /(^|\/)(EXAMPLE-|MENTOR-STUDIO-PROMPT|README|LESSONS|CHANGELOG)/i.test(rel);
+  const isExampleDoc = /(^|\/)(EXAMPLE-|MENTOR-STUDIO-PROMPT|README|CHANGELOG)/i.test(rel);
   const text = readFileSync(path, "utf8");
 
   text.split("\n").forEach((line, i) => {
     if (PLACEHOLDER_RE.test(line) && !isExampleDoc) {
       errors.push(`${rel}:${i + 1} — unfilled placeholder ${line.match(PLACEHOLDER_RE)[0]}`);
     }
-    // Real code must never carry the example prefix — that's the `rnt-` leak, exactly.
+    // Real code must never carry the template's example prefix.
     if (line.includes(EXAMPLE_PREFIX) && !isExampleDoc && /^(tokens|src|specs|build\/review)\//.test(rel)) {
       errors.push(`${rel}:${i + 1} — the template's example prefix "${EXAMPLE_PREFIX}" leaked into real code`);
     }
@@ -188,15 +165,9 @@ if (errors.length) {
   if (errors.length > 40) console.error(`  … and ${errors.length - 40} more`);
   console.error(
     `\nThis gate is deliberate. An uninitialised template that silently "works" is how a wrong\n` +
-      `class prefix or an unverified convention ships into a real project.\n`
+      `class prefix ships into a real project.\n`
   );
   process.exit(1);
 }
 
-const confirmed = Object.entries(cfg.conventions ?? {})
-  .filter(([k, c]) => k !== "$comment" && c?.status === "confirmed")
-  .map(([k]) => k);
-console.log(
-  `check:config → ok (prefix "${cfg.classPrefix}", ${confirmed.length} confirmed convention(s)` +
-    `${confirmed.length ? `: ${confirmed.join(", ")}` : "; none confirmed — no grid/spacing rules will be enforced"})`
-);
+console.log(`check:config → ok (prefix "${cfg.classPrefix}")`);
