@@ -27,7 +27,7 @@ in `build/` (whose error message says how to fix it) — not another paragraph i
 2. In Claude Code, trust the folder (that registers the plugin marketplace from
    `.claude/settings.json`), then run `/lsg:project-setup`. It fills
    `project.config.json` through `npm run init` — ODC or O11 first, then every module and
-   application by role — wires the plugins, the OutSystems MCP server (ODC) and the Figma connector, creates the GitHub labels, and turns your list of deliverables into
+   application by role — wires the plugins, the OutSystems MCP server and the Figma connector, creates the GitHub labels, and turns your list of deliverables into
    `loop/goal.md`'s inventory.
 3. Then:
 
@@ -42,7 +42,9 @@ npm run build:theme
    environment sections of `specs/foundations/platform.md`.
 
 Then ask for work in plain words — "build the button", "the input's error state doesn't match
-Figma" — and review it from the Artifact link on its PR. `CLAUDE.md` has the rest.
+Figma" — and review it from the Artifact link on its PR. Merge it, and `/lsg:deliver` builds it into
+your modules through the OutSystems MCP, or hands it to a developer when there is none. `CLAUDE.md`
+has the rest.
 
 ## Adopting it for another team
 
