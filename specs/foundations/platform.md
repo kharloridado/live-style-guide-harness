@@ -9,23 +9,13 @@ assume, and the build discipline they force. They do not announce themselves; th
 component is mysteriously broken". Each rule carries the failure that put it here — nothing below is
 speculative.
 
-### 1. Parse boolean attributes by value — never test them with `hasAttribute()`
+### 1. Pass a Block's inputs to its Script as typed options — never through DOM attributes
 
-When a Web Component is wrapped in a Block, the platform binds each attribute from an expression, and
-the idiomatic binding is `If(Flag, "true", "false")`. The attribute is therefore **always present in
-the DOM** — as the literal string `"false"` when the flag is off. A component that tests presence
-(`hasAttribute("dismissible")`, or a bare `dismissible` check) sees the feature as permanently on and
-can never be switched off from the platform side.
-
-Read every boolean through one value-aware helper:
-
-```js
-_boolAttr(name, fallback = false) {
-  if (!this.hasAttribute(name)) return fallback;
-  const v = (this.getAttribute(name) || "").trim().toLowerCase();
-  return v !== "false" && v !== "0" && v !== "";
-}
-```
+A custom Block hands its inputs to its Script in the `init` / `update` options, so a Boolean arrives
+as `true` or `false`. Routing it through a widget attribute instead loses that: the idiomatic binding
+`If(Flag, "true", "false")` leaves the attribute **always present**, as the string `"false"` when the
+flag is off, and a script that tests presence (`hasAttribute(...)`) sees the feature as permanently
+on. Pass options; never read a flag back from the DOM.
 
 ### 2. Never hand-type an element id — bind the widget's runtime `.Id`
 
@@ -79,11 +69,11 @@ If text renders in a fallback face — classically a serif where the brand sans 
 almost always a **missing `@font-face` declaration**: a weight or style in use that was never declared.
 Check the declared faces against the weights actually used before touching a URL.
 
-### 8. Restyle the framework's own widget first — build a Web Component only as the last resort
+### 8. Restyle the framework's own widget first — build a custom Block only as the last resort
 
 The escalation order is: use the framework widget as-is → configure it → **override its own classes**
 (`.btn`, `.card`, `.dropdown`, the switch, the text field) through `ExtendedClass` → and only when the
-framework genuinely has no widget for the thing, build a vanilla JS Web Component. Never build a
+framework genuinely has no widget for the thing, build a custom Block with a required Script. Never build a
 parallel `<<CLASS_PREFIX>>button` / `<<CLASS_PREFIX>>card` system beside the framework's own: it inherits none of the framework's
 accessibility, state handling or form integration, and every consuming developer has to be told which
 one to use.
@@ -150,7 +140,7 @@ it). Read the names from there; this table only says what each role holds.
 | Role | ODC | O11 | Holds |
 |---|---|---|---|
 | `theme` | library | CrossDevice module in the Theme application | the Theme: `dist/theme.css` is pasted here; self-hosted font paths resolve against it |
-| `patterns` | library | ReactiveLibrary in the Theme application | the public Blocks and Web Component wrappers; their CSS ships in the theme, and they reference no theme |
+| `patterns` | library | ReactiveLibrary in the Theme application | the public Blocks; their CSS ships in the theme, and they reference no theme |
 | `liveStyleGuide` | app | CrossDevice module in the Live Style Guide application | the foundation pages (rendered from tokens), one page per component, the class inspector |
 | `patPreview` | — (folded into the LSG) | CrossDevice module in the Live Style Guide application | each component's live demo Block, wrapped by `Pattern_Preview` |
 | `template` | app | CrossDevice module | the screen templates and sample pages, on the theme |

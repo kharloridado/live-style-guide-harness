@@ -117,7 +117,7 @@ if (existsSync(osuiBase)) {
 }
 
 /* A usage only counts as dangling when it has NO fallback — `var(--x, 8px)` is a
- * documented fallback chain and is legitimate (Web Components rely on it). */
+ * documented fallback chain and is legitimate. */
 const dangling = new Map();
 for (const m of code.matchAll(/var\(\s*(--[\w-]+)\s*([,)])/g)) {
   const [, name, next] = m;

@@ -9,7 +9,7 @@ Do not copy them here.
 
 ## Goal
 
-<One sentence. e.g. "Translate the <<DESIGN_SYSTEM_NAME>> Figma library into OutSystems, tier by tier, as theme tokens + block CSS + Web Components.">
+<One sentence. e.g. "Translate the <<DESIGN_SYSTEM_NAME>> Figma library into OutSystems, tier by tier, as theme tokens + block CSS + custom Blocks.">
 
 ## Inventory of record
 

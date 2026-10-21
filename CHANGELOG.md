@@ -130,6 +130,13 @@ then clear what `check:state` now warns about.
 
 ### Removed
 
+- **Web Components.** New projects build every custom component as a custom Block with a
+  required Script. `npm run embed:handover` no longer generates Web Component or reference-element
+  prompts and stops with a clear error on a JS file that is not a Block's Required Script; the Web
+  Component templates are gone from `handover/MENTOR-STUDIO-PROMPT.md`, and `platform.md` rule 1
+  is now about passing typed options to the Script. Pair with `lsg` 4.3, which drops the
+  `outsystems-web-component` skill.
+
 - **The `conventions` block** (`spacingBase`, `grid`, `breakpoints`, `defaultComponentSize` with
   `confirmed | assumed | TBD`). No project ever confirmed one. Spacing, grid and breakpoint rules
   are now enforced only when written in `specs/foundations/` or `specs/decisions.md`. Existing
