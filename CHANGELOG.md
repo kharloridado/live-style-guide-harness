@@ -57,11 +57,14 @@ then clear what `check:state` now warns about.
   and a zip of only what is new or changed since the last import (`handover/odc-docs-imported.json`).
 - **The harness knows the Live Style Guide.** Every deliverable now has a documentation page, and
   the page ships with the code:
-  - **Foundation pages render from the theme.** `<lsg-token-reference kind="color">` (also
-    `font-size`, `font-weight`, `space`, `radius`, `border-size`, `shadow`) lists every token of
-    its kind that the published theme declares, with a specimen, its live value and a copy button.
-    A colour added to the theme appears on the Colors page at the next publish, with no page edit.
-    `handover/lsg-foundations.md` installs it: one Block per foundation, each requiring one Script.
+  - **Foundation pages render from the theme.** A `TokenReference` Block (inputs `Kind`,
+    `Heading`, `Filter`, `Exclude`; an `Intro` placeholder) lists every token of its kind that the
+    published theme declares — colour, font size, font weight, spacing, radius, border size,
+    shadow — with a specimen, its live value and a copy button. A colour added to the theme
+    appears on the Colors page at the next publish, with no page edit. Its required Script
+    (`src/lsg/lsg-token-reference.js`) is called from the Block's OnReady, OnParametersChanged and
+    OnDestroy, one instance per widget Id; its CSS (`src/lsg/lsg-token-reference.css`) is held to
+    the token audit. `handover/lsg-foundations.md` installs both.
   - **Usage specs gain §9, "Live Style Guide"**: the page, definition, "When to use", provenance,
     preview and class inspector. `check:state` warns when a component or pattern spec lacks it.
 - **Modules and applications are part of setup.** `project.config.json` → `modules` names where the

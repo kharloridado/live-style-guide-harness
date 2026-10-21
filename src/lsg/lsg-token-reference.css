@@ -1,0 +1,108 @@
+/* lsg-token-reference.css — the TokenReference Block (Live Style Guide). Paste into the Block's
+ * style sheet. The table is rendered by lsg-token-reference.js into .lsg-token-ref__body. */
+
+.lsg-token-ref__heading {
+  margin: 0 0 var(--space-s);
+}
+
+.lsg-token-ref__intro {
+  margin-bottom: var(--space-m);
+  color: var(--color-neutral-8);
+}
+
+.lsg-token-ref__group {
+  margin: var(--space-l) 0 var(--space-s);
+  font-size: var(--font-size-base);
+  text-transform: capitalize;
+}
+
+.lsg-token-ref__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--font-size-s);
+}
+
+.lsg-token-ref__table th,
+.lsg-token-ref__table td {
+  padding: var(--space-s);
+  border-bottom: var(--border-size-s) solid var(--color-neutral-4);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.lsg-token-ref__table th {
+  font-weight: var(--font-semi-bold);
+  color: var(--color-neutral-8);
+}
+
+.lsg-token-ref__table code {
+  overflow-wrap: anywhere;
+}
+
+.lsg-token-ref__col-sample {
+  width: 30%;
+}
+
+.lsg-token-ref__col-token {
+  width: 35%;
+}
+
+.lsg-token-ref__col-value {
+  width: 25%;
+}
+
+.lsg-token-ref__col-copy {
+  width: 10%;
+}
+
+.lsg-token-ref__sample--swatch {
+  width: var(--space-xxl);
+  height: var(--space-xl);
+  border: var(--border-size-s) solid var(--color-neutral-4);
+  border-radius: var(--border-radius-soft);
+}
+
+.lsg-token-ref__sample--bar {
+  height: var(--space-s);
+  background-color: var(--color-primary);
+}
+
+.lsg-token-ref__sample--radius,
+.lsg-token-ref__sample--border,
+.lsg-token-ref__sample--shadow {
+  width: var(--space-xxl);
+  height: var(--space-xxl);
+  border: var(--border-size-s) solid var(--color-neutral-6);
+  background-color: var(--color-neutral-0);
+}
+
+.lsg-token-ref__sample--shadow {
+  border-color: transparent;
+}
+
+.lsg-token-ref__sample--text,
+.lsg-token-ref__sample--weight {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lsg-token-ref__copy {
+  padding: var(--space-xs) var(--space-s);
+  border: var(--border-size-s) solid var(--color-neutral-5);
+  border-radius: var(--border-radius-soft);
+  background-color: var(--color-neutral-0);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lsg-token-ref__copy:focus-visible {
+  outline: var(--border-size-m) solid var(--color-focus-outer);
+  outline-offset: var(--border-size-m);
+}
+
+.lsg-token-ref__empty {
+  color: var(--color-neutral-8);
+}

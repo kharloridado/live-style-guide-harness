@@ -1,23 +1,27 @@
-/* lsg-token-reference.js — <lsg-token-reference>, a Live Style Guide foundation page renderer.
+/* lsg-token-reference.js — the script behind the Live Style Guide's TokenReference Block.
  *
- * Lists every design token of one kind that the page's stylesheets declare on :root / html /
- * body, in declaration order, with its live computed value and a specimen. Token names are
- * discovered, not listed here, so a token added to the theme appears on the next publish.
+ * Renders every design token of one kind that the page's stylesheets declare on :root / html /
+ * body, in declaration order, with a specimen, its live computed value and a copy button. Token
+ * names are discovered, not listed here, so a token added to the theme appears on the next
+ * publish. Styles: lsg-token-reference.css.
  *
- *   <lsg-token-reference kind="color" heading="Colors" intro="…"></lsg-token-reference>
+ * The Block calls it from its own lifecycle, with WidgetId = the Id of the Container to render into:
+ *   OnReady              LsgTokenReference.init($parameters.WidgetId, { kind, filter, exclude });
+ *   OnParametersChanged  LsgTokenReference.update($parameters.WidgetId, { kind, filter, exclude });
+ *   OnDestroy            LsgTokenReference.destroy($parameters.WidgetId);
  *
- * Attributes
+ * Options
  *   kind     color | font-size | font-weight | space | radius | border-size | shadow  (required)
- *   heading  section heading; omitted when empty
- *   intro    one-sentence intro under the heading
  *   filter   regular expression a token name must match, e.g. "^--color-(primary|neutral)"
  *   exclude  regular expression a token name must not match
  */
 (function () {
   "use strict";
 
+  if (window.LsgTokenReference) return;
+
   const KINDS = {
-    color: { prefix: "--color-", sample: "swatch" },
+    color: { prefix: "--color-", sample: "swatch", grouped: true },
     "font-size": { prefix: "--font-size-", sample: "text" },
     "font-weight": { prefix: "--font-", sample: "weight", skip: /^--font-(size|family)-/, numeric: true },
     space: { prefix: "--space-", sample: "bar" },
@@ -27,6 +31,8 @@
   };
 
   const GLOBAL = /^(?::root|html|body)(?:\[[^\]]*\]|:[\w-]+(?:\([^)]*\))?)*$/;
+  const B = "lsg-token-ref";
+  const instances = new Map();
 
   /* Token names in declaration order across every readable stylesheet. */
   function discover(prefix) {
@@ -62,178 +68,112 @@
     return names;
   }
 
-  function family(name, prefix) {
-    return name.slice(prefix.length).split("-")[0];
+  function render(host, options) {
+    host.textContent = "";
+    host.classList.add(`${B}__body`);
+    const kind = KINDS[options.kind];
+    if (!kind) {
+      host.appendChild(el("p", `Unknown token kind "${options.kind}".`, `${B}__empty`));
+      return;
+    }
+
+    const filter = toRegExp(options.filter);
+    const exclude = toRegExp(options.exclude);
+    const computed = getComputedStyle(document.documentElement);
+    const tokens = discover(kind.prefix)
+      .filter((n) => !(kind.skip && kind.skip.test(n)))
+      .filter((n) => !filter || filter.test(n))
+      .filter((n) => !exclude || !exclude.test(n))
+      .map((name) => ({ name, value: computed.getPropertyValue(name).trim() }))
+      .filter((t) => t.value && (!kind.numeric || /^\d+$/.test(t.value)));
+
+    if (!tokens.length) {
+      host.appendChild(el("p", "No tokens of this kind are declared on this page.", `${B}__empty`));
+      return;
+    }
+
+    const groups = new Map();
+    for (const t of tokens) {
+      const key = kind.grouped ? t.name.slice(kind.prefix.length).split("-")[0] : "";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(t);
+    }
+    for (const [key, list] of groups) {
+      if (key) {
+        host.appendChild(el("h3", key, `${B}__group`));
+        list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      }
+      host.appendChild(table(kind, list));
+    }
   }
 
-  const STYLE = `
-    :host { display: block; font-family: inherit; color: var(--color-neutral-10, currentColor); }
-    h2 { margin: 0 0 var(--space-s, 0.5rem); font-size: var(--font-size-h4, 1.25rem); }
-    h3 { margin: var(--space-l, 1.5rem) 0 var(--space-s, 0.5rem); font-size: var(--font-size-base, 1rem); text-transform: capitalize; }
-    p { margin: 0 0 var(--space-m, 1rem); color: var(--color-neutral-8, currentColor); }
-    table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: var(--font-size-s, 0.875rem); }
-    th, td { text-align: left; vertical-align: middle; padding: var(--space-s, 0.5rem); border-bottom: var(--border-size-s, 1px) solid var(--color-neutral-4, currentColor); }
-    th { font-weight: var(--font-semi-bold, 600); color: var(--color-neutral-8, currentColor); }
-    code { font-family: var(--font-family-code, monospace); overflow-wrap: anywhere; }
-    .col-sample { width: 30%; }
-    .col-token { width: 35%; }
-    .col-value { width: 25%; }
-    .col-copy { width: 10%; }
-    .swatch { width: var(--space-xxl, 3rem); height: var(--space-xl, 2rem); border-radius: var(--border-radius-soft, 4px); border: var(--border-size-s, 1px) solid var(--color-neutral-4, currentColor); }
-    .bar { height: var(--space-s, 0.5rem); background: var(--color-primary, currentColor); }
-    .box { width: var(--space-xxl, 3rem); height: var(--space-xxl, 3rem); background: var(--color-neutral-0, transparent); border: var(--border-size-s, 1px) solid var(--color-neutral-6, currentColor); }
-    .text { line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    button { font: inherit; cursor: pointer; padding: var(--space-xs, 0.25rem) var(--space-s, 0.5rem); border: var(--border-size-s, 1px) solid var(--color-neutral-5, currentColor); border-radius: var(--border-radius-soft, 4px); background: var(--color-neutral-0, transparent); color: inherit; }
-    button:focus-visible { outline: var(--border-size-m, 2px) solid var(--color-focus-outer, currentColor); outline-offset: var(--border-size-m, 2px); }
-    .empty { color: var(--color-neutral-8, currentColor); }
-  `;
-
-  class LsgTokenReference extends HTMLElement {
-    static get observedAttributes() {
-      return ["kind", "heading", "intro", "filter", "exclude"];
+  function table(kind, tokens) {
+    const node = document.createElement("table");
+    node.className = `${B}__table`;
+    const head = node.createTHead().insertRow();
+    for (const [label, col] of [["Sample", "sample"], ["Token", "token"], ["Value", "value"], ["", "copy"]]) {
+      const th = document.createElement("th");
+      th.scope = "col";
+      th.className = `${B}__col-${col}`;
+      th.textContent = label;
+      head.appendChild(th);
     }
-
-    constructor() {
-      super();
-      this.attachShadow({ mode: "open" });
-      this._onClick = this._onClick.bind(this);
+    const body = node.createTBody();
+    for (const t of tokens) {
+      const row = body.insertRow();
+      const sampleCell = row.insertCell();
+      sampleCell.setAttribute("aria-hidden", "true");
+      sampleCell.appendChild(sample(kind.sample, t.name));
+      row.insertCell().appendChild(el("code", t.name));
+      row.insertCell().appendChild(el("code", t.value));
+      const copy = el("button", "Copy", `${B}__copy`);
+      copy.type = "button";
+      copy.dataset.copy = `var(${t.name})`;
+      copy.setAttribute("aria-label", `Copy var(${t.name})`);
+      row.insertCell().appendChild(copy);
     }
-
-    connectedCallback() {
-      this.shadowRoot.addEventListener("click", this._onClick);
-      /* Stylesheets attached after this element still count: render once they have applied. */
-      requestAnimationFrame(() => this._render());
-    }
-
-    disconnectedCallback() {
-      this.shadowRoot.removeEventListener("click", this._onClick);
-    }
-
-    attributeChangedCallback() {
-      if (this.isConnected) this._render();
-    }
-
-    _render() {
-      const kind = KINDS[this.getAttribute("kind")];
-      const heading = this.getAttribute("heading") || "";
-      const intro = this.getAttribute("intro") || "";
-      const root = this.shadowRoot;
-      root.textContent = "";
-
-      const style = document.createElement("style");
-      style.textContent = STYLE;
-      root.appendChild(style);
-      if (heading) root.appendChild(el("h2", heading));
-      if (intro) root.appendChild(el("p", intro));
-      if (!kind) {
-        root.appendChild(el("p", `Unknown kind "${this.getAttribute("kind")}".`, "empty"));
-        return;
-      }
-
-      const filter = toRegExp(this.getAttribute("filter"));
-      const exclude = toRegExp(this.getAttribute("exclude"));
-      const computed = getComputedStyle(document.documentElement);
-      const tokens = discover(kind.prefix)
-        .filter((n) => !(kind.skip && kind.skip.test(n)))
-        .filter((n) => !filter || filter.test(n))
-        .filter((n) => !exclude || !exclude.test(n))
-        .map((name) => ({ name, value: computed.getPropertyValue(name).trim() }))
-        .filter((t) => t.value && (!kind.numeric || /^\d+$/.test(t.value)));
-
-      if (!tokens.length) {
-        root.appendChild(el("p", "No tokens of this kind are declared on this page.", "empty"));
-        return;
-      }
-
-      const groups = new Map();
-      for (const t of tokens) {
-        const key = kind.sample === "swatch" ? family(t.name, kind.prefix) : "";
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(t);
-      }
-      for (const [key, list] of groups) {
-        if (key) {
-          root.appendChild(el("h3", key));
-          list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-        }
-        root.appendChild(this._table(kind, list));
-      }
-    }
-
-    _table(kind, tokens) {
-      const table = document.createElement("table");
-      const head = table.createTHead().insertRow();
-      for (const [label, col] of [["Sample", "sample"], ["Token", "token"], ["Value", "value"], ["", "copy"]]) {
-        const th = document.createElement("th");
-        th.scope = "col";
-        th.className = `col-${col}`;
-        th.textContent = label;
-        head.appendChild(th);
-      }
-      const body = table.createTBody();
-      for (const t of tokens) {
-        const row = body.insertRow();
-        const sampleCell = row.insertCell();
-        sampleCell.setAttribute("aria-hidden", "true");
-        sampleCell.appendChild(sample(kind.sample, t.name));
-        row.insertCell().appendChild(el("code", t.name));
-        row.insertCell().appendChild(el("code", t.value));
-        const copy = el("button", "Copy");
-        copy.type = "button";
-        copy.dataset.copy = `var(${t.name})`;
-        copy.setAttribute("aria-label", `Copy var(${t.name})`);
-        row.insertCell().appendChild(copy);
-      }
-      return table;
-    }
-
-    _onClick(event) {
-      const button = event.target.closest("button[data-copy]");
-      if (!button || !navigator.clipboard) return;
-      navigator.clipboard.writeText(button.dataset.copy).then(() => {
-        button.textContent = "Copied";
-        setTimeout(() => (button.textContent = "Copy"), 1500);
-      });
-    }
+    return node;
   }
 
   function sample(type, name) {
     const v = `var(${name})`;
     const node = document.createElement("div");
+    node.className = `${B}__sample ${B}__sample--${type}`;
     switch (type) {
       case "swatch":
-        node.className = "swatch";
         node.style.background = v;
         break;
       case "text":
-        node.className = "text";
         node.style.fontSize = v;
         node.textContent = "The quick brown fox";
         break;
       case "weight":
-        node.className = "text";
         node.style.fontWeight = v;
         node.textContent = "The quick brown fox";
         break;
       case "bar":
-        node.className = "bar";
         node.style.width = v;
         break;
       case "radius":
-        node.className = "box";
         node.style.borderRadius = v;
         break;
       case "border":
-        node.className = "box";
         node.style.borderWidth = v;
         break;
       case "shadow":
-        node.className = "box";
         node.style.boxShadow = v;
-        node.style.border = "0";
         break;
     }
     return node;
+  }
+
+  function onClick(event) {
+    const button = event.target.closest(`.${B}__copy`);
+    if (!button || !navigator.clipboard) return;
+    navigator.clipboard.writeText(button.dataset.copy).then(() => {
+      button.textContent = "Copied";
+      setTimeout(() => (button.textContent = "Copy"), 1500);
+    });
   }
 
   function el(tag, text, className) {
@@ -252,7 +192,44 @@
     }
   }
 
-  if (!customElements.get("lsg-token-reference")) {
-    customElements.define("lsg-token-reference", LsgTokenReference);
-  }
+  window.LsgTokenReference = {
+    /* A second init for the same widget re-renders instead of binding twice. */
+    init(widgetId, options) {
+      const host = document.getElementById(widgetId);
+      if (!host) return;
+      const existing = instances.get(widgetId);
+      if (existing && existing.host === host) return this.update(widgetId, options);
+      if (existing) this.destroy(widgetId);
+      host.addEventListener("click", onClick);
+      instances.set(widgetId, { host, options: { ...options } });
+      /* Stylesheets attached after the Block still count: render once they have applied. */
+      requestAnimationFrame(() => {
+        const instance = instances.get(widgetId);
+        if (instance && instance.host === host) render(host, instance.options);
+      });
+    },
+
+    update(widgetId, options) {
+      const instance = instances.get(widgetId);
+      if (!instance) return this.init(widgetId, options);
+      instance.options = { ...instance.options, ...options };
+      render(instance.host, instance.options);
+    },
+
+    /* Re-read the tokens of one instance, or of all of them (e.g. after a theme switch). */
+    refresh(widgetId) {
+      for (const id of widgetId ? [widgetId] : [...instances.keys()]) {
+        const instance = instances.get(id);
+        if (instance) render(instance.host, instance.options);
+      }
+    },
+
+    destroy(widgetId) {
+      const instance = instances.get(widgetId);
+      if (!instance) return;
+      instance.host.removeEventListener("click", onClick);
+      instance.host.textContent = "";
+      instances.delete(widgetId);
+    },
+  };
 })();
