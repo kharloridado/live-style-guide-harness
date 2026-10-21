@@ -67,12 +67,12 @@ git submodule update --init && npm run build:osui
 ```
 
 **One exemption: the theme's own webfonts.** A self-hosted face points at an ODC Resource
-(`/<odcThemeModule>/x.woff2`) and **ODC rewrites that `src` at compile time**, so the authored
+(`/<theme module>/x.woff2`) and **ODC rewrites that `src` at compile time**, so the authored
 path is not the path that ships (`specs/foundations/platform.md` §7). Those requests are recorded with
 `critical: false` and do not invalidate the viewport; **every other font stays critical.**
 
 **Serve the fonts locally rather than leaning on the exemption.** `build/lib/virtual-origin.mjs`
-maps the `/<odcThemeModule>/` prefix onto the faces committed under `vendor/fonts/`, so one authored
+maps the `/<theme module>/` prefix onto the faces committed under `vendor/fonts/`, so one authored
 path resolves in ODC and in the harness, and the gate measures the face the product renders. If a
 font 404s here, wire up the alias before accepting the fallback, then re-judge any baseline that
 was measured on the fallback face.

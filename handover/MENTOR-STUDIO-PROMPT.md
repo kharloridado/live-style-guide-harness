@@ -100,7 +100,7 @@ state them inline. Take the rules from
 follow" list (one Layout per screen; the menu in the layout's `Navigation` placeholder; only Links
 and Submenus inside `PageLinks`, never styled; the title as one `h1` in `Title`; Phosphor icons at
 Font size; a menubar owns only menu items; ODC cannot omit an attribute, so never bind one to "").
-Say "the Theme CSS is already in <<ODC_THEME_MODULE>>", not `dist/theme.css`.
+Say "the Theme CSS is already in <<THEME_MODULE>>", not `dist/theme.css`.
 
 ### 4. Placeholder, Container or Text
 
@@ -115,7 +115,7 @@ Say "the Theme CSS is already in <<ODC_THEME_MODULE>>", not `dist/theme.css`.
 
 Split by module, one prompt each, and say which module it runs in:
 
-- **Prompt A — the theme module** (`project.config.json` → `odcThemeModule`): the reusable,
+- **Prompt A — the theme module** (`project.config.json` → `modules.theme`): the reusable,
   **public** layout Block. It bakes the design-system class into the OutSystems UI layout wrapper's
   `ExtendedClass` (`"<<CLASS_PREFIX>>side-menu " + ExtendedClass`) so screens set nothing, copies the generic template Blocks it
   needs (e.g. `MenuIcon`), and exposes a placeholder for anything app-specific (e.g. `HeaderTitle`).

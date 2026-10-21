@@ -4,14 +4,14 @@
  * pages see real http:// URL semantics (root-relative paths resolve) and no socket is opened.
  * A bound port is what made the old preview server fail with EADDRINUSE in sandboxes.
  *
- * `/<odcThemeModule>/<file>` maps to that file anywhere under vendor/fonts/: the theme authors its @font-face src as
+ * `/<theme module>/<file>` maps to that file anywhere under vendor/fonts/: the theme authors its @font-face src as
  * an ODC Resource path, which only ODC rewrites, and dist/theme.css must stay byte-identical
  * to what is pasted into ODC. */
 import { readdirSync, existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { projectConfig } from './project-config.mjs';
+import { moduleName } from './project-config.mjs';
 
 export const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 export const ORIGIN = 'http://repo.gate';
@@ -30,7 +30,7 @@ const TYPES = {
 };
 
 export function fontPrefix() {
-  return '/' + projectConfig().odcThemeModule + '/';
+  return '/' + moduleName('theme') + '/';
 }
 
 /** Every file under vendor/fonts/, by name — a project keeps its self-hosted faces there. */

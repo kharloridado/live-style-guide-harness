@@ -70,15 +70,44 @@ while (!/^[a-z][a-z0-9]*-$/.test(prefix) || prefix === "acme-") {
 
 const nsDefault = prefix.replace(/-$/, "").replace(/(^|[-_])(\w)/g, (_, __, c) => c.toUpperCase());
 const jsNs = await ask(`JS namespace for Web Component helpers, window.<Ns>Toast (e.g. ${nsDefault})`, has(cfg.jsNamespace) ? cfg.jsNamespace : nsDefault, "js-namespace");
-/* O11 projects have no tenant MCP endpoint — Service Studio's own MCP server is the design-time
- * channel there, configured per machine, not per repo. Asked before the theme module so the
- * prompt can say which platform the module lives on. */
+/* Asked first: it decides the module kinds below, whether there is a tenant MCP endpoint (ODC only),
+ * and how handovers are written (Mentor prompts on ODC, Service Studio steps on O11). */
 let environment = String(await ask("Platform: ODC or O11", cfg.environment || "ODC", "environment")).trim().toUpperCase();
 if (!["ODC", "O11"].includes(environment)) {
   throw new Error(`Unknown environment "${environment}". Expected ODC or O11.`);
 }
 
-const themeModule = await ask(`${environment} theme module name (used for self-hosted font paths, e.g. NimbusTheme)`, has(cfg.odcThemeModule) ? cfg.odcThemeModule : "", "theme-module");
+/* Where the work lands: every module, and on O11 every application, by role. Defaults follow the
+ * playbook's naming (ODC: NimbusTheme / NimbusPatterns / NimbusLiveStyleGuide / Template_Nimbus;
+ * O11: Nimbus_Theme … in "<Customer> Theme" and "<Customer> Live Style Guide"). Accept them unless
+ * the customer's environment already uses other names. */
+const pascal = (v) => String(v).replace(/[^A-Za-z0-9]+(.)?/g, (_, c) => (c ? c.toUpperCase() : "")).replace(/^./, (c) => c.toUpperCase());
+const known = (role) => (has(cfg.modules?.[role]?.name) ? cfg.modules[role].name : "");
+const base = pascal(dsName);
+let modules;
+if (environment === "ODC") {
+  const theme = await ask("ODC Theme library", known("theme") || (has(cfg.odcThemeModule) ? cfg.odcThemeModule : `${base}Theme`), "theme-module");
+  const stem = theme.replace(/Theme$/, "") || base;
+  modules = {
+    theme: { name: theme, kind: "library" },
+    patterns: { name: await ask("ODC Patterns library", known("patterns") || `${stem}Patterns`, "patterns-module"), kind: "library" },
+    liveStyleGuide: { name: await ask("ODC Live Style Guide app", known("liveStyleGuide") || `${stem}LiveStyleGuide`, "lsg-module"), kind: "app" },
+    template: { name: await ask("ODC Template app", known("template") || `Template_${stem}`, "template-module"), kind: "app" },
+  };
+} else {
+  const themeApp = await ask("O11 Theme application", cfg.modules?.theme?.app || `${customer} Theme`, "theme-app");
+  const lsgApp = await ask("O11 Live Style Guide application", cfg.modules?.liveStyleGuide?.app || `${customer} Live Style Guide`, "lsg-app");
+  const theme = await ask("O11 Theme module", known("theme") || (has(cfg.odcThemeModule) ? cfg.odcThemeModule : `${base}_Theme`), "theme-module");
+  const stem = theme.replace(/_?Theme$/, "") || base;
+  modules = {
+    theme: { name: theme, kind: "CrossDevice", app: themeApp },
+    patterns: { name: await ask("O11 Patterns module", known("patterns") || `${stem}_Patterns`, "patterns-module"), kind: "ReactiveLibrary", app: themeApp },
+    liveStyleGuide: { name: await ask("O11 Live Style Guide module", known("liveStyleGuide") || `${stem}_LSG`, "lsg-module"), kind: "CrossDevice", app: lsgApp },
+    patPreview: { name: await ask("O11 Patterns Preview module", known("patPreview") || `${stem}_PatPreview`, "patpreview-module"), kind: "CrossDevice", app: lsgApp },
+    template: { name: await ask("O11 Template module", known("template") || `Template_${stem}`, "template-module"), kind: "CrossDevice", app: lsgApp },
+  };
+}
+const themeModule = modules.theme.name;
 const repo = await ask("GitHub repo (owner/repo)", has(cfg.repo) ? cfg.repo : "", "repo");
 const figmaUrl = await ask("Figma library URL (blank if not yet known)", has(cfg.figma?.url) ? cfg.figma.url : "", "figma-url");
 const figmaKey = figmaUrl.match(/(?:file|design)\/([A-Za-z0-9]+)/)?.[1] ?? "";
@@ -90,13 +119,15 @@ const figmaKey = figmaUrl.match(/(?:file|design)\/([A-Za-z0-9]+)/)?.[1] ?? "";
  *
  * NEVER guess it. A wrong tenant points every ODC call at somebody else's environment and
  * could publish into it. Blank is the correct answer when unknown: the value stays
- * <<ODC_TENANT>> and check:config keeps failing until a human fills it in. */
+ * <<ODC_TENANT>> and check:config keeps failing until a human fills it in. "none" records that
+ * this project has no MCP access: odcTenant is null and handovers carry Mentor prompts only. */
 const odcTenantRaw = environment === "O11" ? "" : await ask(
-  "ODC tenant hostname (e.g. acme.outsystems.dev — blank if not yet known)",
+  "ODC tenant hostname for the MCP (e.g. acme.outsystems.dev; none = no MCP access; blank if not yet known)",
   has(cfg.odcTenant) ? cfg.odcTenant : "",
   "odc-tenant"
 );
-const odcTenant = String(odcTenantRaw ?? "")
+const noMcp = /^none$/i.test(String(odcTenantRaw ?? "").trim());
+const odcTenant = noMcp ? "" : String(odcTenantRaw ?? "")
   .trim()
   .replace(/^https?:\/\//i, "")
   .replace(/^www\./i, "")
@@ -113,9 +144,9 @@ Object.assign(cfg, {
   classPrefix: prefix,
   jsNamespace: jsNs,
   environment,
-  odcThemeModule: themeModule,
-  // null, not a placeholder, on O11: there is no tenant to fill in later.
-  odcTenant: environment === "O11" ? null : odcTenant || "<<ODC_TENANT>>",
+  modules: { $comment: cfg.modules?.$comment, ...modules },
+  // null, not a placeholder, on O11 or with no MCP access: there is no tenant to fill in later.
+  odcTenant: environment === "O11" || noMcp ? null : odcTenant || "<<ODC_TENANT>>",
   repo,
   figma: { fileKey: figmaKey || "<<FIGMA_FILE_KEY>>", url: figmaUrl || "<<FIGMA_URL>>" },
 });
@@ -132,9 +163,12 @@ if (odcTenant) {
   writeFileSync(MCP, JSON.stringify(mcp, null, 2) + "\n");
   console.log(`  wrote .mcp.json → https://${odcTenant}/mcp`);
 } else if (environment === "O11") {
-  console.log("  .mcp.json not needed on O11 — design-time access is Service Studio's own MCP server.");
+  console.log("  .mcp.json not written on O11 — there is no tenant endpoint; handovers carry Service Studio steps.");
+} else if (noMcp) {
+  console.log("  .mcp.json not written — no MCP access recorded; handovers carry Mentor prompts.");
 } else {
-  console.log("  .mcp.json NOT written — no ODC tenant given; check:config will fail until it is.");
+  console.log("  .mcp.json NOT written — no ODC tenant given; check:config fails until it is, or until");
+  console.log("  you re-run with --odc-tenant=none to record that this project has no MCP access.");
 }
 
 /* Substitute the same values across the scaffold docs. */
@@ -144,7 +178,11 @@ const SUBS = {
   "<<DESIGN_SYSTEM_NAME>>": dsName,
   "<<CLASS_PREFIX>>": prefix,
   "<<JS_NAMESPACE>>": jsNs,
+  "<<THEME_MODULE>>": themeModule,
   "<<ODC_THEME_MODULE>>": themeModule,
+  "<<PATTERNS_MODULE>>": modules.patterns.name,
+  "<<LSG_MODULE>>": modules.liveStyleGuide.name,
+  "<<TEMPLATE_MODULE>>": modules.template.name,
   "<<OWNER/REPO>>": repo,
   "<<FIGMA_URL>>": figmaUrl,
   "<<FIGMA_FILE_KEY>>": figmaKey,
@@ -200,7 +238,7 @@ Done — ${touched} file(s) updated.
 
 Next:
   1. npm run check:config        # must pass; it is part of the build gate
-  2. git submodule update --init # vendor/outsystems-ui — then pin it to your ODC env's version
+  2. git submodule update --init # vendor/outsystems-ui — then pin it to your environment's version
   3. ./.github/setup-finding-labels.sh ${repo || "<owner/repo>"}
   4. write specs/foundations/ from the brand guidelines
   5. fill loop/goal.md: the goal + the SIGNED-OFF component inventory

@@ -19,7 +19,7 @@ specs/
 ├── tokens/token-reference.md     generated — the closed token set
 ├── tokens/<tok-id>/              frozen refs for the token deliverables
 ├── decisions.md                  rulings and signed-off exceptions
-├── components/<cmp-id>.md        the living usage spec — 8 sections, below
+├── components/<cmp-id>.md        the living usage spec — 9 sections, below
 ├── components/<cmp-id>/          the frozen ref and its evidence
 └── patterns/<pat-id>.md, patterns/<pat-id>/
 ```
@@ -77,7 +77,7 @@ publishes it as the review Artifact.
 
 ## Usage spec template
 
-Every `components/<id>.md` and `patterns/<id>.md` has these eight sections, in this order.
+Every `components/<id>.md` and `patterns/<id>.md` has these nine sections, in this order.
 Only spec what exists in this project; a small, accurate spec beats a comprehensive stale one.
 
 ```markdown
@@ -112,7 +112,21 @@ The OutSystems usage (widget + ExtendedClass) and the rendered HTML it produces.
 
 ## 8. Cross-references
 Related specs, foundations, findings (FND-NNN) and decisions that constrain it.
+
+## 9. Live Style Guide
+| | |
+|---|---|
+| Page | Restyle of an OutSystems UI pattern: its stock pattern page. New component: its own page, registered in the menu data (never an ad-hoc screen) |
+| Definition | One sentence, written for this design system — never the OutSystems UI base pattern's text |
+| When to use | "Use the <Name> to …", then "Add the <Block> to the <Placeholder> placeholder." |
+| Provenance | "OutSystems UI <Pattern>, restyled" · "New component" · "Wraps <library>" (with link) |
+| Preview | The real Block in `Pattern_Preview`, one per variant or state, each widget named; options bound to the real inputs |
+| Classes | The class inspector next to each named widget, not a hand-written class list |
+| URL | The published page, once it exists |
 ```
+
+§9 is what the Live Style Guide module shows for this item; the page is built from it. A
+component is not done until its page exists, so the handover carries the page as well as the code.
 
 Every token named in a spec must exist in `tokens/token-reference.md` or be a component-scoped
 custom property declared in `src/`; `npm run sync` checks. A value the design needs and no token

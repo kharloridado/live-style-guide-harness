@@ -18,6 +18,7 @@ const EXAMPLE_PREFIX = "acme-"; // the neutral prefix used in template/skill exa
 const SCAN_DIRS = ["tokens", "src", "specs", "loop", "handover", "findings", "build/review"];
 const SCAN_EXT = /\.(css|js|html|md|json|sh)$/;
 const errors = [];
+const notes = [];
 
 /* ---- 1. project.config.json itself must be filled in --------------------------- */
 const cfg = projectConfig();
@@ -133,9 +134,12 @@ if (!["ODC", "O11"].includes(environment)) {
         "endpoint — set odcTenant to null (re-run `npm run init --environment=O11`)."
     );
   }
+} else if (tenant === null) {
+  notes.push("no OutSystems MCP (odcTenant is null) — handovers carry Mentor prompts, the ODC fallback.");
 } else if (!tenantSet) {
   errors.push(
-    'odcTenant is unset. Re-run `npm run init --odc-tenant=<tenant>.outsystems.dev`. ' +
+    'odcTenant is unset. Re-run `npm run init --odc-tenant=<tenant>.outsystems.dev`, or ' +
+      "`--odc-tenant=none` if this project has no MCP access (handovers then carry Mentor prompts). " +
       "Do NOT guess it: a wrong tenant points every ODC call at somebody else's environment."
   );
 } else if (!existsSync(MCP_PATH)) {
@@ -158,6 +162,31 @@ if (!["ODC", "O11"].includes(environment)) {
   }
 }
 
+/* ---- modules: where the work lands, by role, valid for the platform ------------- */
+const KINDS = { ODC: ["library", "app"], O11: ["CrossDevice", "ReactiveLibrary"] };
+const REQUIRED_ROLES = ["theme", "patterns", "liveStyleGuide"];
+if (cfg.modules && KINDS[environment]) {
+  for (const role of REQUIRED_ROLES) {
+    if (!cfg.modules[role]?.name) {
+      errors.push(`modules.${role} is missing. Re-run \`npm run init\` — it asks for every module by role.`);
+    }
+  }
+  for (const [role, m] of Object.entries(cfg.modules)) {
+    if (role.startsWith("$") || !m || PLACEHOLDER_RE.test(m.name ?? "")) continue;
+    if (!KINDS[environment].includes(m.kind)) {
+      errors.push(
+        `modules.${role}.kind is ${JSON.stringify(m.kind)} — on ${environment} it must be one of ` +
+          `${KINDS[environment].join(" | ")}. Re-run \`npm run init --environment=${environment}\`.`
+      );
+    }
+    if (environment === "O11" && !m.app) {
+      errors.push(`modules.${role}.app is missing — on O11 every module names the application it ships in.`);
+    }
+  }
+} else if (!cfg.modules && !cfg.odcThemeModule) {
+  errors.push("project.config.json has no `modules`. Re-run `npm run init` to record where the work lands.");
+}
+
 /* ---- report --------------------------------------------------------------------- */
 if (errors.length) {
   console.error(`\ncheck:config FAILED — ${errors.length} problem(s):\n`);
@@ -170,4 +199,5 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`check:config → ok (prefix "${cfg.classPrefix}")`);
+console.log(`check:config → ok (prefix "${cfg.classPrefix}", ${cfg.environment ?? "ODC"})`);
+notes.forEach((n) => console.log(`  note: ${n}`));

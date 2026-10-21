@@ -26,5 +26,26 @@
     "",
     "Add an entry for every new handover. A handover with no entry gets no embedded code, and the",
     "embed silently goes stale when its source changes — so keep this in sync (check:state warns)."
-  ]
+  ],
+  "lsg-foundations.md": {
+    "files": [
+      [
+        "src/lsg/lsg-token-reference.js",
+        "js",
+        "Script \"LsgTokenReference\" in <<LSG_MODULE>>, required by each reference Block"
+      ]
+    ],
+    "mentor": {
+      "prompts": [
+        {
+          "title": "Prompt A — the reference Blocks (<<LSG_MODULE>>)",
+          "text": "Goal: In ODC Studio, create the Live Style Guide foundation Blocks for the <<DESIGN_SYSTEM_NAME>> design system. Each Block renders one kind of design token, read live from the theme.\nModule: <<LSG_MODULE>>.\n\nContext (already done manually — do NOT re-create or edit these):\n- dist/theme.css is pasted into the theme of <<THEME_MODULE>>, which this module uses.\n- lsg-token-reference.js is imported in this module as a Script named \"LsgTokenReference\". It defines the custom element <lsg-token-reference>.\n- Do NOT write CSS, author or modify JavaScript, or edit the Theme.\n\nTask — create these elements, referencing each by the exact name given:\n\n1. Create one Block per foundation, in a UI Flow named \"StyleGuideReferences\":\n   - \"ColorReference\": kind = \"color\"\n   - \"TypographyReference\": kind = \"font-size\"\n   - \"FontWeightReference\": kind = \"font-weight\"\n   - \"SpacingReference\": kind = \"space\"\n   - \"RadiusReference\": kind = \"radius\"\n   - \"BorderReference\": kind = \"border-size\"\n   - \"ShadowReference\": kind = \"shadow\"\n2. Give every Block the same three Text inputs: Heading, Intro and Filter (all optional, default \"\").\n3. In each Block, add one HTML Element widget with Tag = \"lsg-token-reference\" and these attributes (the platform requires an expression on every attribute):\n     kind    = the literal for that Block from step 1, e.g. \"color\"\n     heading = Heading\n     intro   = Intro\n     filter  = Filter\n   Nothing else goes inside the Block.\n4. Set each Block's Required Scripts to the one Script \"LsgTokenReference\". Do not load it any other way.\n\nOutSystems UI rules to follow: never edit the OutSystems UI module; never paste HTML into an Expression; keep each Block to the single HTML Element above.\n\nAfter generating, list every Block you created with its HTML Element attributes, and flag anything you could not finish.\nStart with ColorReference and show it to me before creating the others."
+        },
+        {
+          "title": "Prompt B — the Styles screens (<<LSG_MODULE>>)",
+          "text": "Goal: In ODC Studio, put the foundation Blocks on the Styles screens of the Live Style Guide for the <<DESIGN_SYSTEM_NAME>> design system.\nModule: <<LSG_MODULE>>.\n\nContext: the Blocks ColorReference, TypographyReference, FontWeightReference, SpacingReference, RadiusReference, BorderReference and ShadowReference already exist in this module (previous prompt). Do NOT edit them, and do NOT write CSS or JavaScript.\n\nTask:\n1. On each Styles screen, inside the layout's MainContent placeholder, place the matching Block: the Colors screen gets ColorReference, the Typography screen TypographyReference followed by FontWeightReference, and Spacing, Border radius, Border size and Shadow their own Block. If a screen does not exist yet, create it in the same flow as the other Styles screens, on the module's default layout, and add it to the menu the same way the existing Styles screens are.\n2. Set each Block's Intro to the one-sentence intro already on that screen, if there is one. Remove any hand-built swatch, scale or table on the screen that the Block now renders: the Block replaces it.\n3. Leave the brand narrative on the Colors screen where it is, above the Block.\n\nAfter generating, list each screen and the Block placed on it, and every widget you removed."
+        }
+      ]
+    }
+  }
 }

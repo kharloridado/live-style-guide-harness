@@ -40,8 +40,8 @@ then clear what `check:state` now warns about.
   `handover/*.md` missing from `handover-map.json`. A prose-only handover maps to `[]`.
 
 - **O11 projects.** `npm run init -- --environment=O11` sets up an OutSystems 11 project. It
-  skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: on O11, design-time
-  access goes through Service Studio's own MCP server. `check:config` passes without a tenant on
+  skips the ODC tenant, writes `odcTenant: null`, and writes no `.mcp.json`: O11 has no tenant
+  MCP endpoint, so handovers carry Service Studio steps. `check:config` passes without a tenant on
   O11, and `build:osui` builds the O11 version of OutSystems UI, so the fidelity gate measures
   against the framework the environment actually serves. ODC projects are unchanged.
 
@@ -55,6 +55,24 @@ then clear what `check:state` now warns about.
   agent-readable `specs/` Markdown for import into ODC as Resources — context for Mentor and for
   anyone using the Live Style Guide — flattened and link-rewritten. Each release ships everything
   and a zip of only what is new or changed since the last import (`handover/odc-docs-imported.json`).
+- **The harness knows the Live Style Guide.** Every deliverable now has a documentation page, and
+  the page ships with the code:
+  - **Foundation pages render from the theme.** `<lsg-token-reference kind="color">` (also
+    `font-size`, `font-weight`, `space`, `radius`, `border-size`, `shadow`) lists every token of
+    its kind that the published theme declares, with a specimen, its live value and a copy button.
+    A colour added to the theme appears on the Colors page at the next publish, with no page edit.
+    `handover/lsg-foundations.md` installs it: one Block per foundation, each requiring one Script.
+  - **Usage specs gain §9, "Live Style Guide"**: the page, definition, "When to use", provenance,
+    preview and class inspector. `check:state` warns when a component or pattern spec lacks it.
+- **Modules and applications are part of setup.** `project.config.json` → `modules` names where the
+  work lands, by role: `theme`, `patterns`, `liveStyleGuide`, `template` (and `patPreview` on O11),
+  with each one's kind, and on O11 its application. `npm run init` asks for each with the
+  playbook's default names; `check:config` checks the kinds against the platform. It replaces
+  `odcThemeModule`, which existing projects may keep: it is still read as the theme module.
+- **The delivery channel follows the platform.** The OutSystems MCP when one is connected;
+  otherwise every handover carries a Mentor Studio prompt (ODC) or Service Studio steps (O11), and
+  each prompt names the module it runs in. `npm run init -- --odc-tenant=none` records an ODC
+  project with no MCP access. `specs/foundations/platform.md` → "How work reaches the modules".
 - **Several Mentor prompts per handover.** A `handover-map.json` entry may give
   `mentor.prompts: [{ title, text }, …]`; `npm run embed:handover` renders each as its own
   subsection, for changes that span the theme module and consumer apps.

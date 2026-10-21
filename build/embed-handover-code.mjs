@@ -13,6 +13,10 @@
  *                                          attribute bindings, event wiring, Client
  *                                          Actions). See handover/MENTOR-STUDIO-PROMPT.md.
  *
+ * On O11 (`environment` in project.config.json) the same sections are headed "… into Service
+ * Studio" and "## Build in Service Studio", and the prompt becomes steps for a developer.
+ * Every prompt names the module it runs in, from `modules`.
+ *
  * A MAP entry is either `[[file, lang, dest], …]` (files only) or
  * `{ files: [[…]], mentor: { … } }` to override the auto-derived Mentor prompt with a
  * fully-filled one. When `mentor` is absent the prompt is derived from the artifact kind
@@ -27,16 +31,23 @@
  * Usage: node build/embed-handover-code.mjs */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, basename } from "node:path";
-import { projectConfig, root } from "./lib/project-config.mjs";
+import { moduleName, projectConfig, root } from "./lib/project-config.mjs";
 
 const cfg = projectConfig();
 const DS = `${cfg.customer} "${cfg.designSystemName}"`;   // e.g. Acme Corp "Nimbus"
 const NS = cfg.jsNamespace;                                // e.g. Nimbus -> window.NimbusToast
 const P  = cfg.classPrefix;                                // e.g. nimbus-
 const handoverDir = join(root, "handover");
-const MARKER = "## Code to paste into ODC";
+const O11 = (cfg.environment ?? "ODC") === "O11";
+const PATTERNS = moduleName("patterns") ?? moduleName("theme");
+const LSG = moduleName("liveStyleGuide") ?? "the Live Style Guide";
+/* O11 has no Mentor Studio: the same steps are rendered for a developer in Service Studio. A section
+ * is found by either platform's heading, so switching `environment` re-renders it in place. */
+const CODE_MARKERS = ["## Code to paste into ODC", "## Code to paste into Service Studio"];
+const BUILD_MARKERS = ["## Build in ODC with Mentor Studio", "## Build in Service Studio"];
+const MARKER = CODE_MARKERS[O11 ? 1 : 0];
 const WIRING_MARKER = "## Event wiring (OnReady / OnDestroy)";
-const MENTOR_MARKER = "## Build in ODC with Mentor Studio";
+const MENTOR_MARKER = BUILD_MARKERS[O11 ? 1 : 0];
 
 /* handover/handover-map.json: md file → the artifact(s) a developer places into ODC, plus an
  * optional `mentor` spec. Tokens travel via dist/theme.css, so they are not listed. */
@@ -63,7 +74,7 @@ function section(artifacts) {
   return [
     MARKER,
     ``,
-    `> Copy the code below straight into ODC. The canonical source is the repo path in the` +
+    `> Copy the code below straight into ${O11 ? "Service Studio" : "ODC"}. The canonical source is the repo path in the` +
       ` summary — these blocks are generated from it (\`node build/embed-handover-code.mjs\`),` +
       ` so re-run after editing the source to keep the ticket in sync.`,
     ``,
@@ -261,6 +272,7 @@ function wcFilled(m) {
   return [
     `Goal: In ODC Studio, wire up an OutSystems Block that wraps the already-imported custom`,
     `Web Component <${tag}> for the ${DS} design system.`,
+    `Module: ${PATTERNS}.`,
     ``,
     `Context (already done manually — do NOT re-create or edit these):`,
     `- dist/theme.css (brand + component tokens) is already pasted into the ODC Theme editor.`,
@@ -326,6 +338,7 @@ function blockFilled(m) {
     `Goal: In ODC Studio, build an OutSystems Block "${m.block}" that lays out the ${DS}`,
     `Field Wrapper (FieldLabel row + Input + Helper) around NATIVE OutSystems widgets, styled`,
     `purely by the already-pasted CSS + tokens via Extended Class.`,
+    `Module: ${PATTERNS}.`,
     ``,
     `Context (already done manually — do NOT re-create or edit these):`,
     `- dist/theme.css and ${P}text-field.css are already pasted into the ODC Theme editor`,
@@ -389,6 +402,7 @@ function wcGeneric(block, tag, jsFile, dest) {
   return [
     `Goal: In ODC Studio, wire up an OutSystems Block that wraps the already-imported custom`,
     `Web Component <${tag}> for the ${DS} design system.`,
+    `Module: ${PATTERNS}.`,
     ``,
     `Context (already done manually — do NOT re-create or edit these):`,
     `- dist/theme.css and any block CSS are already pasted into the ODC Theme editor.`,
@@ -465,6 +479,7 @@ function refGeneric(block, tag, jsFile) {
   return [
     `Goal: In ODC Studio, place the Style-Guide reference element <${tag}> on the Style Guide`,
     `screen for the ${DS} design system.`,
+    `Module: ${LSG}.`,
     ``,
     `Context (already done): ${jsFile} is added under Resources and loads on the Style-Guide`,
     `screen; dist/theme.css is in the Theme. It is a self-contained display component.`,
@@ -476,7 +491,30 @@ function refGeneric(block, tag, jsFile) {
   ].join("\n");
 }
 
+/* The derived prompts are written for Mentor. On O11 the same steps go to a developer in Service
+ * Studio: drop what only makes sense to an agent (the "show it to me" turn-taking and the report
+ * request) and keep the constraints. */
+function forO11(text) {
+  const kept = [];
+  for (const line of text.split("\n")) {
+    if (/^(Start with step 1|Work iteratively)/.test(line)) break;
+    kept.push(line);
+  }
+  return kept.join("\n")
+    .replace(/In ODC Studio, /g, "In Service Studio, ")
+    .replace(/the ODC Theme editor/g, "the theme module's style sheet")
+    .replace(/ODC requires (an expression|one)/g, "the platform requires $1")
+    .replace(/ \(paste the relevant table into the chat so I work from real names\)/, "")
+    .replace(/After generating, list[\s\S]*$/, "")
+    .trimEnd();
+}
+
 function mentorPrompt(md, entry) {
+  const text = derivedPrompt(md, entry);
+  return O11 ? forO11(text) : text;
+}
+
+function derivedPrompt(md, entry) {
   const m = entry.mentor;
   if (m && m.text) return m.text;                   // verbatim prompt from the map
   if (m && m.kind === "web-component") return wcFilled(m);
@@ -503,6 +541,17 @@ function mentorPrompt(md, entry) {
 
 function mentorSection(md, entry) {
   const prompts = entry.mentor && entry.mentor.prompts;
+  if (O11) {
+    const steps = prompts ? prompts : [{ title: null, text: mentorPrompt(md, entry) }];
+    return [
+      MENTOR_MARKER,
+      ``,
+      `> O11 has no Mentor Studio. Follow these steps in **Service Studio**, in the module each one`,
+      `> names, after the paste/import steps in the checklist. Where an OutSystems MCP server is`,
+      `> connected, the same steps can be applied through it — then verify in a browser.`,
+      ...steps.flatMap((p) => [``, ...(p.title ? [`### ${p.title}`, ``] : []), "```", O11 ? forO11(p.text) : p.text, "```"]),
+    ].join("\n");
+  }
   if (prompts) {
     return [
       MENTOR_MARKER,
@@ -531,8 +580,9 @@ function mentorSection(md, entry) {
 function upsert(text, marker, blockText, insertIdxFn) {
   const lines = text.split("\n");
   const block = blockText.split("\n");
+  const markers = [marker].flat();
 
-  const markerIdx = lines.findIndex((l) => l.trimEnd() === marker);
+  const markerIdx = lines.findIndex((l) => markers.includes(l.trimEnd()));
   if (markerIdx !== -1) {
     // refresh in place: replace from the marker up to the next "## " heading, dropping the
     // blank lines that separated the old section from it (we re-add exactly one).
@@ -564,7 +614,7 @@ for (const [md, raw] of Object.entries(MAP)) {
   let codeBlock;
   try { codeBlock = section(entry.files); }
   catch (e) { console.warn(`skip (${e.message}): ${md}`); continue; }
-  text = upsert(text, MARKER, codeBlock, (lines) => {
+  text = upsert(text, CODE_MARKERS, codeBlock, (lines) => {
     const filesIdx = lines.findIndex((l) => /^##\s+Files\b/.test(l));
     if (filesIdx === -1) return -1;
     const nextIdx = lines.findIndex((l, i) => i > filesIdx && /^##\s+/.test(l));
@@ -576,7 +626,7 @@ for (const [md, raw] of Object.entries(MAP)) {
   const wiring = wiringSection(entry);
   if (wiring) {
     text = upsert(text, WIRING_MARKER, wiring, (lines) => {
-      const mi = lines.findIndex((l) => l.trimEnd() === MENTOR_MARKER);
+      const mi = lines.findIndex((l) => BUILD_MARKERS.includes(l.trimEnd()));
       if (mi !== -1) return mi;
       const ci = lines.findIndex((l) => /^##\s+Checklist\b/.test(l));
       return ci === -1 ? lines.length : ci;
@@ -584,7 +634,7 @@ for (const [md, raw] of Object.entries(MAP)) {
   }
 
   // 3) "## Build in ODC with Mentor Studio" — just before "## Checklist" (else at EOF)
-  text = upsert(text, MENTOR_MARKER, mentorSection(md, entry), (lines) => {
+  text = upsert(text, BUILD_MARKERS, mentorSection(md, entry), (lines) => {
     const ci = lines.findIndex((l) => /^##\s+Checklist\b/.test(l));
     return ci === -1 ? lines.length : ci;
   });
