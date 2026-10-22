@@ -30,6 +30,9 @@ then clear what `check:state` now warns about.
 
 ### Added
 
+- **Audit an existing app's UI.** The plugin's `/lsg:ui-audit` reports, read-only, what an app
+  should have reused — an OutSystems UI component, an existing Block or class, a CSS variable —
+  and proposes the fixes as items for `loop/goal.md`. Its working folder, `ui-audit/`, is ignored.
 - **Approved work gets built into OutSystems.** After a merge, the plugin's `/lsg:deliver` builds
   the Block, its Script and its Live Style Guide page into the modules through the OutSystems MCP
   and checks them in a browser; without an MCP the handover carries the same steps for a
