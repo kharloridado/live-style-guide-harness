@@ -30,6 +30,18 @@ then clear what `check:state` now warns about.
 
 ### Added
 
+- **Assess a design before building it.** The plugin's `/lsg:assess` takes a Figma mockup and
+  says, region by region, what the Live Style Guide already has, what needs a new variant, what
+  comes from OutSystems UI and what is new, with every value matched to a token. The plan lives in
+  `assessments/<slug>/`, with an annotated screenshot, and its proposed rows go into
+  `loop/goal.md` when the plan PR merges.
+- **Audit an existing app's UI.** The plugin's `/lsg:ui-audit` reports, read-only, what an app
+  should have reused — an OutSystems UI component, an existing Block or class, a CSS variable —
+  and anything used more than once that is not a Block, and proposes the fixes as items for
+  `loop/goal.md`. Its working folder, `ui-audit/`, is ignored.
+- **Hard rule 11: reuse, never re-make.** Anything used in two or more places is one reusable
+  Block, and what already exists — in OutSystems UI or the design system — is used, never written
+  again.
 - **Approved work gets built into OutSystems.** After a merge, the plugin's `/lsg:deliver` builds
   the Block, its Script and its Live Style Guide page into the modules through the OutSystems MCP
   and checks them in a browser; without an MCP the handover carries the same steps for a
@@ -101,6 +113,11 @@ then clear what `check:state` now warns about.
 
 ### Changed
 
+- **The ODC MCP comes from OutSystems' own plugin.** `npm run init` no longer writes `.mcp.json`;
+  it removes an old `outsystems` entry and prints the one command each developer runs:
+  `claude plugin install outsystems@outsystems --config tenant_hostname=<odcTenant>`.
+  `check:config` fails while an `outsystems` entry remains in `.mcp.json`, because it duplicates
+  or hides the plugin's server. Pair with `lsg` 4.3.
 - **`npm run init` on a fresh copy** resets `CHANGELOG.md` to an empty `[Unreleased]` and the
   version to 0.0.0, so a new project does not inherit the template's release notes.
 - **Renamed to Live Style Guide Harness**, and its plugin to `lsg` (repo `live-style-guide-loop`).
@@ -124,6 +141,13 @@ then clear what `check:state` now warns about.
 - **`setup-finding-labels.sh`** also creates the `deliverable` label the loop puts on its PRs.
 
 ### Removed
+
+- **Web Components.** New projects build every custom component as a custom Block with a
+  required Script. `npm run embed:handover` no longer generates Web Component or reference-element
+  prompts and stops with a clear error on a JS file that is not a Block's Required Script; the Web
+  Component templates are gone from `handover/MENTOR-STUDIO-PROMPT.md`, and `platform.md` rule 1
+  is now about passing typed options to the Script. Pair with `lsg` 4.3, which drops the
+  `outsystems-web-component` skill.
 
 - **The `conventions` block** (`spacingBase`, `grid`, `breakpoints`, `defaultComponentSize` with
   `confirmed | assumed | TBD`). No project ever confirmed one. Spacing, grid and breakpoint rules

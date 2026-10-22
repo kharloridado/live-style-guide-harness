@@ -112,10 +112,9 @@ const repo = await ask("GitHub repo (owner/repo)", has(cfg.repo) ? cfg.repo : ""
 const figmaUrl = await ask("Figma library URL (blank if not yet known)", has(cfg.figma?.url) ? cfg.figma.url : "", "figma-url");
 const figmaKey = figmaUrl.match(/(?:file|design)\/([A-Za-z0-9]+)/)?.[1] ?? "";
 
-/* The ODC tenant is the ONE project value that must exist in TWO files: the harness reads
- * .mcp.json before any build script runs, so it cannot resolve the value through
- * project-config.mjs. The copy is therefore GENERATED here and CHECKED by check:config —
- * documentation saying "keep these two in sync by hand" is a promise nobody keeps.
+/* The ODC tenant is the project's tenant of record. OutSystems' own `outsystems` plugin declares
+ * the MCP server from its `tenant_hostname` option, which lives in each developer's user settings,
+ * so this value is what they pass to it; nothing in the repo registers the server.
  *
  * NEVER guess it. A wrong tenant points every ODC call at somebody else's environment and
  * could publish into it. Blank is the correct answer when unknown: the value stays
@@ -153,23 +152,29 @@ Object.assign(cfg, {
 cfg.findings.ticketTarget = repo;
 writeFileSync(CONFIG, JSON.stringify(cfg, null, 2) + "\n");
 
-/* Generate .mcp.json from the tenant rather than asking anyone to hand-edit it. The ODC
- * MCP is a remote HTTP endpoint served by the tenant itself; nothing installs locally and
- * no token is stored, because auth is OAuth with Dynamic Client Registration. */
+/* A project-scope `outsystems` server would duplicate or hide the plugin's, so an old one goes. */
 const MCP = join(root, ".mcp.json");
+if (existsSync(MCP)) {
+  const mcp = JSON.parse(readFileSync(MCP, "utf8"));
+  if (mcp.mcpServers?.outsystems) {
+    delete mcp.mcpServers.outsystems;
+    const others = Object.keys(mcp.mcpServers).length > 0;
+    if (others) writeFileSync(MCP, JSON.stringify(mcp, null, 2) + "\n");
+    else unlinkSync(MCP);
+    console.log(`  removed the outsystems server from .mcp.json${others ? "" : " (and the empty file)"} — the plugin declares it`);
+  }
+}
 if (odcTenant) {
-  const mcp = existsSync(MCP) ? JSON.parse(readFileSync(MCP, "utf8")) : {};
-  mcp.mcpServers = { ...(mcp.mcpServers ?? {}), outsystems: { type: "http", url: `https://${odcTenant}/mcp` } };
-  writeFileSync(MCP, JSON.stringify(mcp, null, 2) + "\n");
-  console.log(`  wrote .mcp.json → https://${odcTenant}/mcp`);
+  console.log("  ODC MCP: OutSystems' plugin, set once per machine:");
+  console.log(`    claude plugin install outsystems@outsystems --config tenant_hostname=${odcTenant}`);
 } else if (environment === "O11") {
-  console.log("  .mcp.json not written on O11 — the MCP is Service Studio's own, set up on each machine.");
+  console.log("  O11 MCP: Service Studio's own server, set up on each machine.");
   console.log("  Without it, handovers carry Service Studio steps.");
 } else if (noMcp) {
-  console.log("  .mcp.json not written — no MCP access recorded; handovers carry Mentor prompts.");
+  console.log("  No MCP access recorded; handovers carry Mentor prompts.");
 } else {
-  console.log("  .mcp.json NOT written — no ODC tenant given; check:config fails until it is, or until");
-  console.log("  you re-run with --odc-tenant=none to record that this project has no MCP access.");
+  console.log("  No ODC tenant given; check:config fails until it is, or until you re-run with");
+  console.log("  --odc-tenant=none to record that this project has no MCP access.");
 }
 
 /* Substitute the same values across the scaffold docs. */

@@ -27,7 +27,7 @@ in `build/` (whose error message says how to fix it) — not another paragraph i
 2. In Claude Code, trust the folder (that registers the plugin marketplace from
    `.claude/settings.json`), then run `/lsg:project-setup`. It fills
    `project.config.json` through `npm run init` — ODC or O11 first, then every module and
-   application by role — wires the plugins, the OutSystems MCP server and the Figma connector, creates the GitHub labels, and turns your list of deliverables into
+   application by role — wires the plugins (OutSystems' own `outsystems` plugin, which brings the OutSystems MCP, set to your tenant) and the Figma connector, creates the GitHub labels, and turns your list of deliverables into
    `loop/goal.md`'s inventory.
 3. Then:
 

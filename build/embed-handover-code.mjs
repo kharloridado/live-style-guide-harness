@@ -10,8 +10,8 @@
  *                                          it doesn't just point at a repo path).
  *   "## Build in ODC with Mentor Studio" — a ready-to-paste prompt for ODC Mentor Studio
  *                                          that scaffolds the OutSystems side (Block,
- *                                          attribute bindings, event wiring, Client
- *                                          Actions). See handover/MENTOR-STUDIO-PROMPT.md.
+ *                                          inputs, widgets, the Script's lifecycle calls,
+ *                                          Client Actions). See handover/MENTOR-STUDIO-PROMPT.md.
  *
  * On O11 (`environment` in project.config.json) the same sections are headed "… into Service
  * Studio" and "## Build in Service Studio", and the prompt becomes steps for a developer.
@@ -20,8 +20,7 @@
  * A MAP entry is either `[[file, lang, dest], …]` (files only) or
  * `{ files: [[…]], mentor: { … } }` to override the auto-derived Mentor prompt with a
  * fully-filled one. When `mentor` is absent the prompt is derived from the artifact kind
- * (custom Block with a required Script / Web Component / native-widget restyle / Style-Guide
- * reference). A JS file whose destination names a "Required Script" is a custom Block's.
+ * (custom Block with a required Script, or native-widget restyle). A JS file whose destination names a "Required Script" is a custom Block's.
  *
  * `mentor: { text: "…" }` is the escape hatch: the prompt is taken VERBATIM from the map.
  * `mentor: { prompts: [{ title, text }, …] }` renders several verbatim prompts, one subsection each,
@@ -47,7 +46,6 @@ const LSG = moduleName("liveStyleGuide") ?? "the Live Style Guide";
 const CODE_MARKERS = ["## Code to paste into ODC", "## Code to paste into Service Studio"];
 const BUILD_MARKERS = ["## Build in ODC with Mentor Studio", "## Build in Service Studio"];
 const MARKER = CODE_MARKERS[O11 ? 1 : 0];
-const WIRING_MARKER = "## Event wiring (OnReady / OnDestroy)";
 const MENTOR_MARKER = BUILD_MARKERS[O11 ? 1 : 0];
 
 /* handover/handover-map.json: md file → the artifact(s) a developer places into ODC, plus an
@@ -83,136 +81,6 @@ function section(artifacts) {
   ].join("\n");
 }
 
-/* ── "## Event wiring (OnReady / OnDestroy)" ─────────────────────────────────── */
-/* Resolve { tag, customEvents } for a component that dispatches CustomEvents. Source is the
- * full `mentor` spec (when it carries tag + customEvents) or a lightweight `wiring` field;
- * null for components that emit nothing (references, restyles) so no section is generated. */
-function wiringOf(entry) {
-  const m = entry.mentor;
-  if (m && m.tag && m.customEvents) return { tag: m.tag, customEvents: m.customEvents };
-  if (entry.wiring && entry.wiring.tag && entry.wiring.customEvents) return entry.wiring;
-  return null;
-}
-
-// "OnChange" → "RaiseOnChange": the Block Client Action whose one Trigger Event node raises it.
-function raiseName(blockEvent) {
-  return "Raise" + blockEvent;
-}
-
-// A Raise action carries the event's argument as one input, named by the optional 4th tuple
-// element (default "Value"); an event with no detailArg has no input.
-function raiseParam([, , detail, param]) {
-  return detail ? (param || "Value") : null;
-}
-
-// "acme-" → "__acmeHandlers"; hyphenated prefixes camel-case ("acme-ds-" → "__acmeDsHandlers").
-const HANDLERS = "__" + P.split("-").filter(Boolean)
-  .map((s, i) => (i ? s.charAt(0).toUpperCase() + s.slice(1) : s)).join("") + "Handlers";
-
-/* The two "Run JavaScript" bodies. Handlers live on the element (el.<HANDLERS>), never on
- * $public: $public is one object shared by every instance of the Block, so a second instance
- * overwrote the first's handlers and destroying either disconnected the other. OnDestroy looks
- * the element up again from its own WidgetId. Events are raised through Raise<Event> Block
- * Client Actions because $actions reaches Client Actions, not Block events. The resolver
- * mirrors the shipped window.<Ns>Toast resolve() — the id may point at the element itself OR
- * the wrapping Block/Container. customEvents entries are [event, BlockEvent, detailArg?, param?]. */
-function eventWiring(tag, customEvents) {
-  // pad the quoted event token so the handler column lines up
-  const qW = Math.max(...customEvents.map(([ev]) => ev.length + 2));
-  const q = (ev) => `'${ev}'`.padEnd(qW);
-  const resolve = [
-    `var root = document.getElementById($parameters.WidgetId);`,
-    `var el = (root && root.tagName && root.tagName.toLowerCase() === '${tag}')`,
-    `  ? root : (root ? root.querySelector('${tag}') : null);`,
-  ];
-  const each = (method) => [
-    `  Object.keys(el.${HANDLERS}).forEach(function (type) {`,
-    `    el.${method}(type, el.${HANDLERS}[type]);`,
-    `  });`,
-  ];
-
-  const onReady = [
-    `// Block OnReady — "Run JavaScript" node. Input: WidgetId = <ElementName>.Id`,
-    ...resolve,
-    `if (el && !el.${HANDLERS}) {`,
-    `  el.${HANDLERS} = {`,
-    ...customEvents.map(([ev, blockEv, detail], i) =>
-      `    ${q(ev)}: function (e) { $actions.${raiseName(blockEv)}(${detail || ""}); }` +
-      (i < customEvents.length - 1 ? "," : "")),
-    `  };`,
-    ...each("addEventListener"),
-    `}`,
-  ].join("\n");
-
-  const onDestroy = [
-    `// Block OnDestroy — "Run JavaScript" node. Input: WidgetId = <ElementName>.Id`,
-    ...resolve,
-    `if (el && el.${HANDLERS}) {`,
-    ...each("removeEventListener"),
-    `  delete el.${HANDLERS};`,
-    `}`,
-  ].join("\n");
-
-  return { onReady, onDestroy };
-}
-
-function wiringSection(entry) {
-  const w = wiringOf(entry);
-  if (!w) return null;
-  const { onReady, onDestroy } = eventWiring(w.tag, w.customEvents);
-  const rows = w.customEvents.map(([ev, blockEv, detail]) =>
-    `| \`${ev}\` | \`$actions.${raiseName(blockEv)}(${detail || ""})\` | \`${blockEv}\` |`);
-  const actions = w.customEvents.map((c) => {
-    const param = raiseParam(c);
-    return param
-      ? `| \`${raiseName(c[1])}\` | \`${param}\` | one Trigger Event → \`${c[1]}\`, parameter = \`${param}\` |`
-      : `| \`${raiseName(c[1])}\` | — | one Trigger Event → \`${c[1]}\` |`;
-  });
-  return [
-    WIRING_MARKER,
-    ``,
-    `> The component's CustomEvents are wired in the Block's **OnReady** and cleaned up in`,
-    `> **OnDestroy** — the declarative "Handle Events" path is unreliable for custom elements.`,
-    `> Give the \`<${w.tag}>\` element (or its wrapping Block) a **Name** and pass its`,
-    `> platform-generated \`.Id\` to **both** "Run JavaScript" nodes as \`WidgetId\`. Paste the`,
-    `> two blocks verbatim.`,
-    ``,
-    `**Store nothing on \`$public\`.** It is one object shared by every instance of the Block, not`,
-    `one per instance: with two instances on a screen, the second OnReady overwrites the first's`,
-    `handlers, and destroying either one disconnects the other's events. The handlers are kept on`,
-    `the element itself (\`el.${HANDLERS}\`), and OnDestroy finds the element again from its own`,
-    `\`WidgetId\`.`,
-    ``,
-    `| CustomEvent | calls | raises Block event |`,
-    `|---|---|---|`,
-    ...rows,
-    ``,
-    `### Block Client Actions — the bridge from JavaScript to the events`,
-    ``,
-    `\`$actions\` in a "Run JavaScript" node reaches **Client Actions**, not Block events — only a`,
-    `**Trigger Event** node raises a Block event. Create one Client Action **on the Block** per`,
-    `event, each containing a **single Trigger Event node** and nothing else:`,
-    ``,
-    `| Client Action | Input | Body |`,
-    `|---|---|---|`,
-    ...actions,
-    ``,
-    `Give each input the same data type as the Block event's parameter.`,
-    ``,
-    `**OnReady** — resolve the element, attach listeners, keep them on the element:`,
-    ``,
-    "```js",
-    onReady,
-    "```",
-    ``,
-    `**OnDestroy** — resolve the element again, remove its listeners:`,
-    ``,
-    "```js",
-    onDestroy,
-    "```",
-  ].join("\n");
-}
-
 /* ── "## Build in ODC with Mentor Studio" ────────────────────────────────────── */
 // "<prefix>button-dropdown.md" → "ButtonDropdown"
 function pascal(md) {
@@ -220,110 +88,6 @@ function pascal(md) {
     .split("-").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join("");
 }
 
-// Fully-filled Web Component prompt from a `mentor` spec.
-function wcFilled(m) {
-  const tag = m.tag;
-  // pad input name/type columns to the widest entry so the list stays aligned
-  const nameW = Math.max(...m.inputs.map(([n]) => n.length));
-  const typeW = Math.max(...m.inputs.map(([, t]) => t.length));
-  const inputs = m.inputs.map(([n, t, d]) => `     ${n.padEnd(nameW)} : ${t.padEnd(typeW)} : ${d}`).join("\n");
-  const attrW = Math.max(...m.attrs.map(([a]) => a.length));
-  const attrs = m.attrs.map(([a, e]) => `     ${a.padEnd(attrW)} = ${e}`).join("\n");
-  const ce = m.customEvents.map(([c, ev]) => `the "${c}" CustomEvent triggers ${ev}`).join(", and ");
-  const raiseW = Math.max(...m.customEvents.map(([, ev]) => raiseName(ev).length + 2));
-  const raises = m.customEvents.map((c) => {
-    const param = raiseParam(c);
-    return `        - ${`"${raiseName(c[1])}"`.padEnd(raiseW)} : ` + (param
-      ? `input ${param}; one Trigger Event node → ${c[1]}, parameter = ${param}.`
-      : `no inputs; one Trigger Event node → ${c[1]}.`);
-  });
-
-  // Static-Entity note (Type/Position/etc. are enumerations, not free Text).
-  const seLines = (m.staticEntities || []).map((e) => {
-    const recs = e.records.map(([r, v]) => `${r} = "${v}"`).join(", ");
-    return `   - ${e.name}: ${recs}`;
-  });
-  const seBlock = seLines.length ? [
-    `   Static Entities — create these first. Give each a SINGLE Text attribute "${(m.staticEntities[0] || {}).attr || "Value"}"`,
-    `   set as the record Identifier, and delete the default Id/Label/Order/Is_Active attributes.`,
-    `   Each record's value IS the literal the Web Component expects, so the input binds straight`,
-    `   to the attribute (no .Value suffix). Model the matching inputs as the entity, NOT free Text:`,
-    ...seLines,
-  ] : [];
-
-  // Step 4 — address by the platform-generated widget .Id, only if a global helper exists.
-  const helperStep = m.helper ? [
-    ``,
-    `4. OutSystems generates element ids at runtime, so you address a specific instance by its`,
-    `   widget's platform id — NOT a hand-typed string. Give the <${tag}> element (or its`,
-    `   Block) a Name, then create client action(s) with a "Run JavaScript" node that take a`,
-    `   WidgetId Text input set to <thatWidgetName>.Id and call the helper:`,
-    ...m.methods.map((meth) => {
-      const name = meth.charAt(0).toUpperCase() + meth.slice(1) + m.block;
-      return `     - "${name}": ${m.helper}.${meth}($parameters.WidgetId);`;
-    }),
-    `   The helper resolves the <${tag}> from that id (it accepts the element id or a`,
-    `   wrapping Block/Container id).`,
-  ] : [
-    ``,
-    `4. This component exposes no global helper — drive it entirely through the Block inputs`,
-    `   and events above; there is no id to pass.`,
-  ];
-
-  return [
-    `Goal: In ODC Studio, wire up an OutSystems Block that wraps the already-imported custom`,
-    `Web Component <${tag}> for the ${DS} design system.`,
-    `Module: ${PATTERNS}.`,
-    ``,
-    `Context (already done manually — do NOT re-create or edit these):`,
-    `- dist/theme.css (brand + component tokens) is already pasted into the ODC Theme editor.`,
-    `- ${tag}.js is already imported as a Script resource (Theme/Library), ${m.include}. It`,
-    `  defines the custom element <${tag}>${m.helper ? ` and the global helper ${m.helper}` : ``}.`,
-    `- Do NOT write CSS, author or modify JavaScript, or edit the Theme. Your job is only the`,
-    `  Block, its inputs/events, the attribute bindings, the event wiring${m.helper ? `, and the Client` : ``}`,
-    m.helper ? `  Actions that drive the component.` : `  the component needs.`,
-    ``,
-    `Task — create these elements, referencing each by the exact name given:`,
-    ``,
-    `1. Create a Block named "${m.block}" with input parameters:`,
-    inputs,
-    `   and Block events: ${m.events.join(", ")}.`,
-    ...seBlock,
-    `   Do NOT add a string Id input or set the element's id — OutSystems generates ids at`,
-    `   runtime (see step 4 for addressing).`,
-    ``,
-    `2. Place an HTML element <${tag}> in the Block. Set one attribute per input via a Value`,
-    `   expression (ODC requires an expression on every attribute):`,
-    attrs,
-    `   Static-Entity inputs bind directly (e.g. type = Type) — the Value attribute is the`,
-    `   record Identifier. Use If(flag,"true","false") for every Boolean (values, not presence).`,
-    ``,
-    `3. Wire CustomEvents to Block events: ${ce}.`,
-    `   a. A JavaScript node cannot raise a Block event directly — $actions reaches Client`,
-    `      Actions, and only a Trigger Event node raises an event. Create one Client Action ON`,
-    `      THE BLOCK per event, each a single Trigger Event node:`,
-    ...raises,
-    `   b. Do NOT use the declarative "Handle Events" path (unreliable for custom elements).`,
-    `      Add a "Run JavaScript" node in the Block's OnReady and a second in OnDestroy, each`,
-    `      with a WidgetId (Text) input = <the <${tag}> element's Name>.Id. OnReady attaches the`,
-    `      listeners and calls the Raise actions from 3a; OnDestroy removes them. The exact code`,
-    `      is in this handover's "## Event wiring (OnReady / OnDestroy)" section — paste it`,
-    `      verbatim (you are placing provided JS, not authoring it).`,
-    `   c. Store nothing on $public: it is one shared object, not one per Block instance, and a`,
-    `      second instance on the screen would lose its events.`,
-    ...helperStep,
-    ``,
-    `Constraints: never edit the OutSystems UI module; add no CSS or hard-coded values (styling`,
-    `comes from var(--token) in the Theme). After generating, list every element you created by`,
-    `name and flag any step you could not finish so I can do it manually.`,
-    ``,
-    `Start with step 1 (the Block "${m.block}" interface) and show it to me before wiring.`,
-  ].join("\n");
-}
-
-// Fully-filled prompt for a restyle-based Block with placeholders (e.g. the Field Wrapper):
-// the Block wraps NATIVE widgets dropped into placeholders, styled via Extended Class — there
-// is no single custom element to bind attributes on, so this differs from wcFilled.
 function blockFilled(m) {
   const nameW = Math.max(...m.inputs.map(([n]) => n.length));
   const typeW = Math.max(...m.inputs.map(([, t]) => t.length));
@@ -398,62 +162,6 @@ function blockFilled(m) {
   ].join("\n");
 }
 
-// Generic Web Component prompt (no `mentor` spec): point Mentor at this handover's API tables.
-function wcGeneric(block, tag, jsFile, dest) {
-  return [
-    `Goal: In ODC Studio, wire up an OutSystems Block that wraps the already-imported custom`,
-    `Web Component <${tag}> for the ${DS} design system.`,
-    `Module: ${PATTERNS}.`,
-    ``,
-    `Context (already done manually — do NOT re-create or edit these):`,
-    `- dist/theme.css and any block CSS are already pasted into the ODC Theme editor.`,
-    `- ${jsFile} is already imported as a ${dest}. It defines the custom element <${tag}>.`,
-    `- Do NOT write CSS, author/modify JavaScript, or edit the Theme. Your job is only the`,
-    `  Block, its inputs/events, the attribute bindings, the event wiring, and any Client`,
-    `  Actions that drive it.`,
-    ``,
-    `Task — reference every element by the exact name given. Take the exact inputs, attribute`,
-    `bindings, events and any global helper from this handover's "API — Attributes / Methods /`,
-    `Events" tables (paste the relevant table into the chat so I work from real names):`,
-    ``,
-    `1. Create a Block named "${block}". Add one input per attribute (use the documented`,
-    `   default) and one event per CustomEvent. Model enumerable attributes (variant / type /`,
-    `   size / position / status) as Static Entities — one record per allowed value, with a`,
-    `   single Text attribute (e.g. "Value") set as the record Identifier (delete the default`,
-    `   Id/Label/Order/Is_Active) holding the literal the component expects — not free Text;`,
-    `   keep free-form text as Text and flags as Boolean. Do NOT add a string Id input or set`,
-    `   the element's id; OutSystems generates ids at runtime (see step 4).`,
-    `2. Place <${tag}> in the Block. Bind each attribute to its input with a Value expression`,
-    `   (ODC requires one on every attribute). Static-Entity inputs bind directly (e.g.`,
-    `   type = Type) since their Value attribute is the identifier; Booleans use`,
-    `   If(Flag, "true", "false") — not presence.`,
-    `3. Wire each CustomEvent to its Block event in the Block's OnReady (attach) and OnDestroy`,
-    `   (remove) — not via the declarative "Handle Events" path, which is unreliable for custom`,
-    `   elements.`,
-    `   a. A JavaScript node cannot raise a Block event directly — $actions reaches Client`,
-    `      Actions, and only a Trigger Event node raises an event. For each Block event create a`,
-    `      Client Action ON THE BLOCK named "Raise<Event>" (e.g. "RaiseOnChange") containing a`,
-    `      single Trigger Event node, with one input per event parameter passed straight through.`,
-    `   b. Add a "Run JavaScript" node in OnReady and a second in OnDestroy, each with a WidgetId`,
-    `      (Text) input = <the <${tag}> element's Name>.Id. Paste the verbatim code from this`,
-    `      handover's "## Event wiring (OnReady / OnDestroy)" section: OnReady attaches the`,
-    `      listeners and calls the Raise actions; OnDestroy removes them.`,
-    `   c. Store nothing on $public: it is one shared object, not one per Block instance, and a`,
-    `      second instance on the screen would lose its events.`,
-    `4. If the component exposes a global helper (see its API section), give the element/Block`,
-    `   a Name and pass its platform-generated runtime .Id, e.g.`,
-    `   window.${NS}X.show($parameters.WidgetId) where the WidgetId input = <WidgetName>.Id.`,
-    ``,
-    `Constraints: never edit the OutSystems UI module; add no CSS or hard-coded values (styling`,
-    `comes from var(--token) in the Theme). After generating, list every element you created by`,
-    `name and flag anything you could not finish.`,
-    ``,
-    `Work iteratively: create the Block interface in step 1 and show it to me before wiring.`,
-  ].join("\n");
-}
-
-// Custom Block prompt: real widgets + placeholders + typed inputs, one required Script driven by the
-// Block's lifecycle. Mentor builds it from this handover's "## The Block" section.
 function blockGeneric(block, jsFile) {
   const api = `${NS}.${block}`;
   return [
@@ -521,23 +229,6 @@ function restyleGeneric(block, cssFile) {
   ].join("\n");
 }
 
-// Style-Guide reference element: just place it on the Style Guide screen.
-function refGeneric(block, tag, jsFile) {
-  return [
-    `Goal: In ODC Studio, place the Style-Guide reference element <${tag}> on the Style Guide`,
-    `screen for the ${DS} design system.`,
-    `Module: ${LSG}.`,
-    ``,
-    `Context (already done): ${jsFile} is added under Resources and loads on the Style-Guide`,
-    `screen; dist/theme.css is in the Theme. It is a self-contained display component.`,
-    ``,
-    `Task: add the <${tag}> element to the Style Guide screen where this specimen belongs.`,
-    `There are no inputs or events to wire. Do NOT write CSS or JavaScript.`,
-    ``,
-    `Constraints: never edit the OutSystems UI module; add no styles. Report what you placed.`,
-  ].join("\n");
-}
-
 /* The derived prompts are written for Mentor. On O11 the same steps go to a developer in Service
  * Studio: drop what only makes sense to an agent (the "show it to me" turn-taking and the report
  * request) and keep the constraints. */
@@ -565,29 +256,20 @@ function mentorPrompt(md, entry) {
 function derivedPrompt(md, entry) {
   const m = entry.mentor;
   if (m && m.text) return m.text;                   // verbatim prompt from the map
-  if (m && m.kind === "web-component") return wcFilled(m);
   if (m && m.kind === "block") return blockFilled(m);
 
   const arts = entry.files;
   const jsArt = arts.find((a) => a[1] === "js");
   const cssArt = arts.find((a) => a[1] === "css");
   const destStr = arts.map((a) => a[2]).join(" ");
-  const kind = (m && m.kind) ||
-    (jsArt
-      ? /Required Script/i.test(destStr) ? "custom-block"
-        : /Script resource/i.test(destStr) ? "web-component" : "reference"
-      : "restyle");
   const block = pascal(md);
-
-  if (kind === "custom-block") return blockGeneric(block, basename(jsArt[0]));
-  if (kind === "web-component") {
-    const tag = basename(jsArt[0], ".js");
-    return wcGeneric(block, tag, basename(jsArt[0]), jsArt[2]);
+  if (jsArt && !/Required Script/i.test(destStr)) {
+    throw new Error(
+      `${md}: ${jsArt[0]} is not a custom Block's Required Script. Web Components are not handed ` +
+        `over any more — build the component as a custom Block and name the JS destination "Required Script".`
+    );
   }
-  if (kind === "reference") {
-    const tag = (m && m.tag) || basename(jsArt[0], ".js");
-    return refGeneric(block, tag, basename(jsArt[0]));
-  }
+  if (jsArt) return blockGeneric(block, basename(jsArt[0]));
   return restyleGeneric(block, basename(cssArt[0]));
 }
 
@@ -673,19 +355,7 @@ for (const [md, raw] of Object.entries(MAP)) {
     return nextIdx === -1 ? lines.length : nextIdx;
   });
 
-  // 2) "## Event wiring (OnReady / OnDestroy)" — just before the Mentor section (only for
-  //    components that dispatch CustomEvents)
-  const wiring = wiringSection(entry);
-  if (wiring) {
-    text = upsert(text, WIRING_MARKER, wiring, (lines) => {
-      const mi = lines.findIndex((l) => BUILD_MARKERS.includes(l.trimEnd()));
-      if (mi !== -1) return mi;
-      const ci = lines.findIndex((l) => /^##\s+Checklist\b/.test(l));
-      return ci === -1 ? lines.length : ci;
-    });
-  }
-
-  // 3) "## Build in ODC with Mentor Studio" — just before "## Checklist" (else at EOF)
+  // 2) "## Build in ODC with Mentor Studio" — just before "## Checklist" (else at EOF)
   text = upsert(text, BUILD_MARKERS, mentorSection(md, entry), (lines) => {
     const ci = lines.findIndex((l) => /^##\s+Checklist\b/.test(l));
     return ci === -1 ? lines.length : ci;
