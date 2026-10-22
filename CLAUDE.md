@@ -8,6 +8,9 @@ hooks) is the versioned **`lsg`** plugin ([live-style-guide-loop](https://github
 
 ## How work happens
 
+0. A new screen or mockup is assessed first: `/lsg:assess` matches every part against the Live
+   Style Guide, then OutSystems UI, and plans only what is missing (`assessments/<slug>/`). The
+   scope owner signs its proposed `loop/goal.md` rows by merging the plan PR.
 1. A request in a session — "add the error state to the input" — on its own branch.
 2. `/lsg:design-loop` freezes the ref, runs `@lsg:maker` then
    `@lsg:checker`, and opens **one PR** with its review Artifact. Larger scopes run
@@ -56,6 +59,7 @@ src/blocks/       BEM ExtendedClass overrides of native OutSystems UI widgets
 src/components/   the required Script of each custom Block (L5): init / update / destroy
 src/lsg/          Live Style Guide tooling (pages rendered from the tokens) — not a deliverable
 build/            theme build and checks, token audit, release, gate/ (fidelity), review/ (Artifacts)
+assessments/      per new screen or mockup: what the Live Style Guide already covers, and the plan
 findings/         the register (FND-NNN) and ticket payloads — findings/README.md
 handover/         developer handover bodies with the code to paste embedded
 loop/             goal.md (queue runs) and state.json (an index, not an authority)

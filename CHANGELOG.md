@@ -30,6 +30,11 @@ then clear what `check:state` now warns about.
 
 ### Added
 
+- **Assess a design before building it.** The plugin's `/lsg:assess` takes a Figma mockup and
+  says, region by region, what the Live Style Guide already has, what needs a new variant, what
+  comes from OutSystems UI and what is new, with every value matched to a token. The plan lives in
+  `assessments/<slug>/`, with an annotated screenshot, and its proposed rows go into
+  `loop/goal.md` when the plan PR merges.
 - **Audit an existing app's UI.** The plugin's `/lsg:ui-audit` reports, read-only, what an app
   should have reused — an OutSystems UI component, an existing Block or class, a CSS variable —
   and anything used more than once that is not a Block, and proposes the fixes as items for

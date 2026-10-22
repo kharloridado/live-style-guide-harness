@@ -11,6 +11,8 @@ dist/
 /review/
 # /lsg:ui-audit working files: the probe's output, the inventory and the report source.
 /ui-audit/
+# Generated from assessments/<slug>/ by the plugin's annotate.mjs; published as an Artifact.
+/assessments/*/assessment.html
 
 # Licensed vendor assets (icon-font metadata, vector artwork). See vendor/LICENSING.md.
 # These are paid assets: do not commit or redistribute them. One such metadata file
