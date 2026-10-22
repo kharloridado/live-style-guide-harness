@@ -136,3 +136,6 @@ ODC paste. Only merged work is released.
 9. **The code says WHAT; the PR says WHY.** No decision logs, deferral rationales or passing
    contrast ratios in a `.css` or `.js` file — see the plugin's `comment-budget.md`.
 10. A usage spec changes in the same PR as the code it describes.
+11. **Reuse, never re-make.** Anything used in two or more places — a component, a pattern wrapped
+    the same way, a group of widgets — is one reusable Block. What already exists (an OutSystems UI
+    component, class or variable, a design-system Block or class) is used, never written again.
