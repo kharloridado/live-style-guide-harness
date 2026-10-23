@@ -26,6 +26,13 @@ export function projectConfig() {
   return cached;
 }
 
+/** Whether the theme stacks on OutSystems UI (`framework: "outsystems-ui"`, the default) or
+ *  stands alone (`framework: "none"`). With none, nothing loads the framework base: not the
+ *  specimen pages, not validate:theme, not the token audit or the token reference. */
+export function usesOutSystemsUI() {
+  return (projectConfig().framework ?? "outsystems-ui") === "outsystems-ui";
+}
+
 /** The name of the module that plays `role` (theme | patterns | liveStyleGuide | template |
  *  patPreview). Projects initialised before `modules` existed keep the theme in odcThemeModule. */
 export function moduleName(role) {

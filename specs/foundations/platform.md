@@ -2,6 +2,26 @@
 
 How the host platform constrains every build, and this project's ODC environment.
 
+## When the project has no framework underneath
+
+`project.config.json` → `framework` says whether the theme stacks on OutSystems UI
+(`"outsystems-ui"`, the default) or stands alone (`"none"`, only when the owner explicitly said
+not to use OutSystems UI). With `"none"`, the rules below change as follows:
+
+- **Tokens.** `tokens/*.css` declares every token, named and valued from the source design
+  system's own, with the project prefix. No framework variable is redefined, and none is there to
+  fall back on.
+- **Rule 6 (device classes).** OutSystems UI's layout script sets `.tablet` / `.phone`. Without
+  it, assume nothing does, and confirm on a published page before relying on either.
+- **Rule 8** becomes *restyle the platform's native widget first*. Button, Input, Checkbox,
+  Dropdown and the rest still render with the platform's classes, but only this theme styles
+  them. OutSystems UI *patterns* (Accordion, Tabs, Date Picker…) aren't available, so build what
+  the design system needs as a custom Block (L5).
+- **Rule 9.** The frontend-skills pack is still the reference for native widget markup.
+  `vendor/outsystems-ui` is reference only.
+- **The gates.** `build:osui` is skipped. The specimen pages, `validate:theme`, `audit:tokens` and
+  `specs:tokens` load no framework base.
+
 ## OutSystems and ODC rules
 
 Behaviours of the host platform that contradict what a competent web developer would reasonably

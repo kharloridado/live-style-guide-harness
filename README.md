@@ -2,7 +2,7 @@
 
 Start every OutSystems design-system engagement here. Figma designs (or written specs of a live
 app) in; three pasteable artifacts out: the **theme** (`dist/theme.css`), **block CSS** that
-restyles native OutSystems UI widgets, and **custom Blocks** with a required vanilla-JS Script. Every build is reviewed
+restyles native widgets (on OutSystems UI, or with no framework at all), and **custom Blocks** with a required vanilla-JS Script. Every build is reviewed
 as a published Artifact: the component beside its Figma frame, its measured values against the
 judged baseline, its findings, and the code to paste into ODC or O11.
 
@@ -33,10 +33,14 @@ in `build/` (whose error message says how to fix it) — not another paragraph i
 
 ```bash
 npm install
-git submodule update --init vendor/outsystems-ui
-npm run build:osui
+git submodule update --init vendor/outsystems-ui   # only when building on OutSystems UI
+npm run build:osui                                 # skipped when framework is "none"
 npm run build:theme
 ```
+
+   `npm run init` asks whether the project builds on OutSystems UI. The answer is *yes* unless
+   the owner explicitly says not to use it. Answer *no* only then, and the design system is built
+   from its own tokens on a theme with no base theme (`"framework": "none"`).
 
 4. Write `specs/foundations/` from the brand guidelines and the Figma library, and fill the
    environment sections of `specs/foundations/platform.md`.

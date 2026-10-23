@@ -14,7 +14,7 @@
 import { readFileSync, existsSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
-import { root } from "./lib/project-config.mjs";
+import { root, usesOutSystemsUI } from "./lib/project-config.mjs";
 import { checkStructure } from "./lib/css-structure.mjs";
 
 const themeFile = join(root, "dist", "theme.css");
@@ -101,9 +101,12 @@ const defined = new Set([...code.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
  * and the validator would call it fine. That is the exact silent-failure class this
  * check exists to catch, so the harvest is restricted to the selectors whose declarations
  * are genuinely inherited by every element the theme styles. A block override that needs
- * a scoped property must still spell out a fallback: var(--x, <value>). */
-const osuiBase = join(root, "review", "vendor", "outsystems-ui", "outsystems-ui.css");
-if (existsSync(osuiBase)) {
+ * a scoped property must still spell out a fallback: var(--x, <value>).
+ *
+ * With `framework: "none"` there is no base: the theme's own tokens are the whole set. */
+const osuiBase = usesOutSystemsUI() ? join(root, "review", "vendor", "outsystems-ui", "outsystems-ui.css") : null;
+const baseMissing = osuiBase !== null && !existsSync(osuiBase);
+if (osuiBase && !baseMissing) {
   const base = readFileSync(osuiBase, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   /* Selector list must consist ONLY of :root / html / body (with optional pseudo-classes
    * such as :root:not(.x) or html[dir=rtl]); one scoped selector in the list and the
@@ -127,7 +130,7 @@ for (const m of code.matchAll(/var\(\s*(--[\w-]+)\s*([,)])/g)) {
   }
 }
 
-if (dangling.size && !existsSync(osuiBase)) {
+if (dangling.size && baseMissing) {
   errors.push(
     `${dangling.size} token reference(s) cannot be checked: the OutSystems UI base is not built.\n\n` +
       `    review/vendor/outsystems-ui/outsystems-ui.css is missing, so tokens the framework owns\n` +

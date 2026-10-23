@@ -9,9 +9,9 @@
  *   npm run specs:tokens -- --check exit 1 if the committed file is stale (used by sync) */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { projectConfig, root } from './lib/project-config.mjs';
+import { projectConfig, root, usesOutSystemsUI } from './lib/project-config.mjs';
 
-const OSUI = 'review/vendor/outsystems-ui/outsystems-ui.css';
+const OSUI = usesOutSystemsUI() ? 'review/vendor/outsystems-ui/outsystems-ui.css' : null;
 const THEME = 'dist/theme.css';
 const OUT = 'specs/tokens/token-reference.md';
 
@@ -24,12 +24,12 @@ const FAMILIES = [
   ['Colour — semantic', /^--color-(?:error|success|warning|info|focus)/, 'State only: validation, alerts, focus. Never decoration.'],
   ['Colour — ramps', /^--color-[a-z]+-(?:lightest|lighter|light|dark|darker|darkest)$|^--color-(?:red|orange|yellow|lime|green|teal|cyan|blue|indigo|violet|grape|pink)$/, 'Tints and shades of each hue. Use when a ref binds one by name; otherwise prefer brand, neutral or semantic.'],
   ['Colour — surfaces and roles', /^--color-|^--overlay/, 'Page and component backgrounds, and the framework\'s role aliases.'],
-  ['Spacing', { test: (n) => /^--space-/.test(n) || own('space-').test(n) }, 'padding, margin, gap, inset. The scale is the framework\'s. A value between steps has no token: build it as drawn and raise a design-token finding.'],
+  ['Spacing', { test: (n) => /^--(?:space|units)-/.test(n) || own('space-').test(n) }, 'padding, margin, gap, inset. The scale is the framework\'s. A value between steps has no token: build it as drawn and raise a design-token finding.'],
   ['Typography', { test: (n) => /^--font-|^--line-height/.test(n) || own('font-').test(n) || own('line-height-').test(n) }, 'font-size, font-weight, font-family, line-height. Sizes and weights are the framework\'s; the project prefix adds only what OutSystems UI lacks.'],
-  ['Radius', { test: (n) => /^--border-radius-/.test(n) || own('border-radius-').test(n) }, 'border-radius. --border-radius-circle is 100%, which is round only on a square box.'],
+  ['Radius', { test: (n) => /^--(?:border-radius|radius)-/.test(n) || own('border-radius-').test(n) }, 'border-radius. --border-radius-circle is 100%, which is round only on a square box.'],
   ['Border size', /^--border-size-/, 'border-width and outline-width.'],
   ['Shadow', /^--shadow-/, 'box-shadow. Several steps are bound in the mockups; use the one the ref names.'],
-  ['Layers', /^--layer-/, 'z-index. Local tiers for stacking inside a component, global tiers for overlays.'],
+  ['Layers', /^--(?:layer|z-index)-/, 'z-index. Local tiers for stacking inside a component, global tiers for overlays.'],
   ['Layout', /^--(?:header|side|bottom|footer)-|^--os-|^--osui-(?:bottom|sidebar|menu|popup|notification)/, 'Framework layout dimensions. Read, rarely override.'],
   ['Icons', /^--osui-icon/, 'The framework\'s icon glyph variables.'],
   ['Other', /./, ''],
@@ -54,11 +54,10 @@ function notesFrom(css) {
 }
 
 function build() {
-  for (const p of [OSUI, THEME]) if (!existsSync(join(root, p))) throw new Error(`${p} is missing — run npm run build:osui and npm run build:theme`);
-  const osuiCss = readFileSync(join(root, OSUI), 'utf8');
+  for (const p of [OSUI, THEME]) if (p && !existsSync(join(root, p))) throw new Error(`${p} is missing — run ${OSUI ? 'npm run build:osui and ' : ''}npm run build:theme`);
   const themeCss = readFileSync(join(root, THEME), 'utf8');
   const tokens = new Map();
-  for (const [name, value] of harvest(osuiCss)) tokens.set(name, { value, framework: value, source: 'OutSystems UI' });
+  if (OSUI) for (const [name, value] of harvest(readFileSync(join(root, OSUI), 'utf8'))) tokens.set(name, { value, framework: value, source: 'OutSystems UI' });
   for (const [name, value] of harvest(themeCss)) {
     const t = tokens.get(name);
     tokens.set(name, t ? { ...t, value, source: value === t.framework ? 'OutSystems UI' : 'Theme (redefined)' } : { value, source: 'Theme (added)' });
@@ -67,20 +66,26 @@ function build() {
   const cfg = projectConfig();
   const groups = FAMILIES.map(([title, re, use]) => ({ title, re, use, rows: [] }));
   for (const [name, t] of [...tokens].sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))) {
-    groups.find((g) => g.re.test(name)).rows.push([name, t]);
+    /* A standalone theme prefixes every token (`--<prefix>color-primary`): group it by the name after the prefix. */
+    const bare = OSUI ? name : name.replace(own(''), '--');
+    groups.find((g) => g.re.test(bare)).rows.push([name, t]);
   }
   const redefined = [...tokens.values()].filter((t) => t.source !== 'OutSystems UI').length;
+  const model = OSUI
+    ? `There is no alias layer. OutSystems UI's own variables are the tokens; \`tokens/*.css\` redefines the
+ones this brand changes, and the theme loads after the framework, so the redefinition wins everywhere
+the framework uses the name. \`--${cfg.classPrefix}*\` exists only for what the framework has no variable for.`
+    : `There is no framework underneath (\`framework: "none"\`): \`tokens/*.css\` declares every token, and
+nothing else defines a custom property the theme can use.`;
   let md = `# Token reference — ${cfg.designSystemName}
 
-> Generated by \`npm run specs:tokens\` from \`${THEME}\` over the compiled OutSystems UI base.
+> Generated by \`npm run specs:tokens\` from \`${THEME}\`${OSUI ? ' over the compiled OutSystems UI base' : ''}.
 > Do not edit: change \`tokens/\`, rebuild, regenerate.
 
 The closed set of values UI code may use: **${tokens.size} tokens**, ${redefined} of them set by this theme.
 Every visual value in \`src/\` is \`var(--one-of-these)\`. \`npm run audit:tokens\` fails on anything else.
 
-There is no alias layer. OutSystems UI's own variables are the tokens; \`tokens/*.css\` redefines the
-ones this brand changes, and the theme loads after the framework, so the redefinition wins everywhere
-the framework uses the name. \`--${cfg.classPrefix}*\` exists only for what the framework has no variable for.
+${model}
 
 A value the design needs and no token holds is **built as drawn and raised as a finding**, never
 rounded to the nearest token and never minted as a one-off token.

@@ -1,6 +1,7 @@
 /* @section Colors */
 /* colors.css — the OutSystems UI colour variables this brand replaces, declared on the
  * framework's own names (`--color-primary: #…`). Redefine only what differs; a value identical
- * to the framework's is left to the framework. Spec: specs/tokens/<tok-id>/. */
+ * to the framework's is left to the framework. With `framework: "none"`, every colour token,
+ * named and valued from the source design system's own. Spec: specs/tokens/<tok-id>/. */
 :root {
 }

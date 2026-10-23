@@ -53,9 +53,10 @@ unwritten one.
 ```
 specs/            foundations, token reference, decisions, and per item a usage spec (<id>.md)
                   beside its frozen ref, specimen, probes and judged baseline (<id>/)
-tokens/           redefines OutSystems UI variables in place; prefixed tokens only for what the
-                  framework lacks. index.css is the ordered manifest.
-src/blocks/       BEM ExtendedClass overrides of native OutSystems UI widgets
+tokens/           with framework "outsystems-ui", redefines its variables in place (prefixed tokens
+                  only for what it lacks); with "none", declares every token, from the source
+                  design system's own. index.css is the ordered manifest.
+src/blocks/       BEM ExtendedClass overrides of native widgets
 src/components/   the required Script of each custom Block (L5): init / update / destroy
 src/lsg/          Live Style Guide tooling (pages rendered from the tokens) — not a deliverable
 build/            theme build and checks, token audit, release, gate/ (fidelity), review/ (Artifacts)
@@ -71,7 +72,7 @@ CHANGELOG.md      release notes — the one file the owner reads; write entries 
 
 | Command | What it does |
 | --- | --- |
-| `npm run build:osui` | Compile the OutSystems UI submodule. Once per clone or worktree. |
+| `npm run build:osui` | Compile the OutSystems UI submodule. Once per clone or worktree. Skipped when `framework` is `"none"`. |
 | `npm run build:theme` | check:config → check:stylesheets → check:state → `dist/theme.css` → `var()` validation → token audit. |
 | `npm run review -- <id>` | Build `review/<id>.html` (no id: the library page). Publish it with the Artifact tool. |
 | `npm run gate:measure -- --probes <…/probes.json>` | Measure one item's specimen page. `gate:regression` re-measures all (CI). |
@@ -80,8 +81,9 @@ CHANGELOG.md      release notes — the one file the owner reads; write entries 
 | `npm run specs:tokens` | Regenerate the token reference after a token change. |
 | `npm run sync` | Non-blocking drift report: pins, stale refs, specs naming unknown tokens. |
 
-A fresh clone or worktree needs `npm install`, `git submodule update --init vendor/outsystems-ui`
-and `npm run build:osui` before any gate or review command; the plugin's session hook names
+A fresh clone or worktree needs `npm install`, plus (when `framework` is `"outsystems-ui"`)
+`git submodule update --init vendor/outsystems-ui` and `npm run build:osui`, before any gate or
+review command; the plugin's session hook names
 whatever is missing. A background or scheduled run gets its own worktree, and every commit stages
 explicit paths — two sessions in one tree commit each other's half-finished work.
 

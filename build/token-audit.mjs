@@ -17,10 +17,10 @@
  * Exit 1 on any error (CI), 0 otherwise. */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { root } from './lib/project-config.mjs';
+import { projectConfig, root, usesOutSystemsUI } from './lib/project-config.mjs';
 
 const DIRS = ['src/blocks', 'src/components', 'src/lsg'];
-const OSUI = join(root, 'review', 'vendor', 'outsystems-ui', 'outsystems-ui.css');
+const OSUI = usesOutSystemsUI() ? join(root, 'review', 'vendor', 'outsystems-ui', 'outsystems-ui.css') : null;
 const THEME = join(root, 'dist', 'theme.css');
 
 const COLOR = /#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla)\([^)]*\)/g;
@@ -29,17 +29,23 @@ const LENGTH = /(?<![\w.#-])-?\d*\.?\d+(?:px|rem|em)\b/g;
 const DURATION = /(?<![\w.-])\d*\.?\d+m?s\b/g;
 const ACK = /FND-\d{3}|ref §\s?\d/g;
 
+/* A token family, with or without the project prefix (`--space-m` or `--<prefix>units-2`). The
+ * alternatives cover OutSystems UI's names and a source design system's own (spacing `units`,
+ * `radius`, `z-index`, as USWDS names them). */
+const P = projectConfig().classPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const family = (rest) => new RegExp(`^--(?:${P})?(?:${rest})`);
+
 /* Which properties a literal is an error on, and which token family can answer it. */
 const RULES = [
-  { prop: /^z-index$/, kind: 'Raw z-index', family: /^--layer-/ },
-  { prop: /^font-size$/, kind: 'Raw font size', family: /^--font-size-/ },
-  { prop: /^font-weight$/, kind: 'Raw font-weight', family: /^--font-/ },
-  { prop: /radius$/, kind: 'Raw radius', family: /^--border-radius-/ },
-  { prop: /shadow$/, kind: 'Raw shadow', family: /^--shadow-/ },
-  { prop: /^(?:padding|margin|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-|$)/, kind: 'Raw spacing', family: /^--space-/ },
+  { prop: /^z-index$/, kind: 'Raw z-index', family: family('layer-|z-index-') },
+  { prop: /^font-size$/, kind: 'Raw font size', family: family('font-size-') },
+  { prop: /^font-weight$/, kind: 'Raw font-weight', family: family('font-') },
+  { prop: /radius$/, kind: 'Raw radius', family: family('border-radius-|radius-') },
+  { prop: /shadow$/, kind: 'Raw shadow', family: family('shadow-') },
+  { prop: /^(?:padding|margin|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-|$)/, kind: 'Raw spacing', family: family('space-|units-') },
 ];
-const COLOR_FAMILY = /^--(?:color|background-color|text-color|border-color)-/;
-const BORDER_WIDTH = { prop: /^(?:border|outline)(?:-[a-z]+)*-width$|^(?:border|outline)(?:-(?:top|right|bottom|left|block|inline)(?:-start|-end)?)?$/, family: /^--border-size-/ };
+const COLOR_FAMILY = family('(?:color|background-color|text-color|border-color)-');
+const BORDER_WIDTH = { prop: /^(?:border|outline)(?:-[a-z]+)*-width$|^(?:border|outline)(?:-(?:top|right|bottom|left|block|inline)(?:-start|-end)?)?$/, family: family('border-size-') };
 
 function norm(v) {
   v = v.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -60,7 +66,7 @@ function tokenValues() {
       for (const d of m[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) byName.set(d[1], norm(d[2]));
     }
   };
-  if (existsSync(OSUI)) add(readFileSync(OSUI, 'utf8'));
+  if (OSUI && existsSync(OSUI)) add(readFileSync(OSUI, 'utf8'));
   if (existsSync(THEME)) add(readFileSync(THEME, 'utf8'));
   const byValue = new Map();
   for (const [name, v] of byName) {
@@ -145,15 +151,15 @@ function audit(file, tokens) {
       if (/^-?0*\.?0+(?:px|rem|em)$/.test(len)) continue;
       if (rule && prop !== 'z-index' && prop !== 'font-weight') push('error', rule.kind, len, rule.family);
       else if (BORDER_WIDTH.prop.test(prop)) push('warning', 'Raw border width', len, BORDER_WIDTH.family);
-      else push('warning', 'Raw length', len, /^--(?:space|size)-/);
+      else push('warning', 'Raw length', len, family('(?:space|size|units|measure)-'));
     }
-    if (/^(?:transition|animation)/.test(prop)) for (const d of value.match(DURATION) || []) push('warning', 'Raw duration', d, /^--(?:motion|transition|duration)-/);
+    if (/^(?:transition|animation)/.test(prop)) for (const d of value.match(DURATION) || []) push('warning', 'Raw duration', d, family('(?:motion|transition|duration)-'));
   }
   return issues;
 }
 
 const tokens = tokenValues();
-if (!tokens.size) console.warn('token-audit: no token values found — run npm run build:osui and npm run build:theme for suggestions.\n');
+if (!tokens.size) console.warn(`token-audit: no token values found — run ${OSUI ? 'npm run build:osui and ' : ''}npm run build:theme for suggestions.\n`);
 const list = files();
 console.log('Token Audit\nScanning ' + list.length + ' CSS file(s)...\n');
 let errors = 0, warnings = 0, acknowledged = 0, withIssues = 0;

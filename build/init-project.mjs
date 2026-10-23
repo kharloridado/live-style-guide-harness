@@ -77,6 +77,17 @@ if (!["ODC", "O11"].includes(environment)) {
   throw new Error(`Unknown environment "${environment}". Expected ODC or O11.`);
 }
 
+/* Whether the theme stacks on OutSystems UI. It does by default. Only when the owner explicitly
+ * says not to use it is the theme standalone: built from the design system's own tokens, with no
+ * base theme. */
+const frameworkRaw = String(await ask(
+  "Build on OutSystems UI? (yes unless the owner explicitly said not to use OutSystems UI)",
+  cfg.framework === "none" ? "no" : "yes",
+  "framework"
+)).trim().toLowerCase();
+const framework = { yes: "outsystems-ui", y: "outsystems-ui", "outsystems-ui": "outsystems-ui", no: "none", n: "none", none: "none" }[frameworkRaw];
+if (!framework) throw new Error(`Unknown answer "${frameworkRaw}". Expected yes or no (--framework=outsystems-ui | none).`);
+
 /* Where the work lands: every module, and on O11 every application, by role. Defaults follow the
  * playbook's naming (ODC: NimbusTheme / NimbusPatterns / NimbusLiveStyleGuide / Template_Nimbus;
  * O11: Nimbus_Theme … in "<Customer> Theme" and "<Customer> Live Style Guide"). Accept them unless
@@ -143,6 +154,7 @@ Object.assign(cfg, {
   classPrefix: prefix,
   jsNamespace: jsNs,
   environment,
+  framework,
   modules: { $comment: cfg.modules?.$comment, ...modules },
   // null, not a placeholder, on O11 or with no MCP access: there is no tenant to fill in later.
   odcTenant: environment === "O11" || noMcp ? null : odcTenant || "<<ODC_TENANT>>",
@@ -246,14 +258,23 @@ if (firstRun) {
 }
 
 await rl?.close();
+const steps = framework === "none"
+  ? [
+      "npm run check:config        # must pass; it is part of the build gate",
+      "record \"not built on OutSystems UI\" in specs/decisions.md; the theme has no base theme",
+      `./.github/setup-finding-labels.sh ${repo || "<owner/repo>"}`,
+      "write specs/foundations/ from the design system's own documentation and tokens",
+    ]
+  : [
+      "npm run check:config        # must pass; it is part of the build gate",
+      "git submodule update --init # vendor/outsystems-ui — then pin it to your environment's version",
+      `./.github/setup-finding-labels.sh ${repo || "<owner/repo>"}`,
+      "write specs/foundations/ from the brand guidelines",
+    ];
+steps.push("fill loop/goal.md: the goal + the SIGNED-OFF component inventory", "/lsg:design-loop");
 console.log(`
 Done — ${touched} file(s) updated.
 
 Next:
-  1. npm run check:config        # must pass; it is part of the build gate
-  2. git submodule update --init # vendor/outsystems-ui — then pin it to your environment's version
-  3. ./.github/setup-finding-labels.sh ${repo || "<owner/repo>"}
-  4. write specs/foundations/ from the brand guidelines
-  5. fill loop/goal.md: the goal + the SIGNED-OFF component inventory
-  6. /lsg:design-loop
+${steps.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 `);
