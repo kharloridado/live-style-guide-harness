@@ -5,8 +5,8 @@ How the host platform constrains every build, and this project's ODC environment
 ## When the project has no framework underneath
 
 `project.config.json` → `framework` says whether the theme stacks on OutSystems UI
-(`"outsystems-ui"`) or stands alone (`"none"`), the usual choice when migrating an established
-design system. With `"none"`, the rules below change as follows:
+(`"outsystems-ui"`, the default) or stands alone (`"none"`, only when the owner explicitly said
+not to use OutSystems UI). With `"none"`, the rules below change as follows:
 
 - **Tokens.** `tokens/*.css` declares every token, named and valued from the source design
   system's own, with the project prefix. No framework variable is redefined, and none is there to

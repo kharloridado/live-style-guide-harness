@@ -22,11 +22,11 @@ and what they have to re-paste.
 
 ## [Unreleased]
 
-**Migrate an established design system without OutSystems UI.** `npm run init` now asks
-whether the project builds on OutSystems UI. A brand theme does. A migration of an established
-design system (USWDS, GOV.UK Frontend, Material…) can answer *no*, and is then built as it is,
-from its own tokens, on a theme with no base theme. The answer is `project.config.json` →
-`framework` (`"outsystems-ui"`, the default, or `"none"`).
+**Build without OutSystems UI when the owner says so.** `npm run init` now asks whether the
+project builds on OutSystems UI. The default is *yes*. Answer *no* only when the owner explicitly
+says not to use it, and the design system is then built from its own tokens on a theme with no
+base theme. The answer is `project.config.json` → `framework` (`"outsystems-ui"`, the default,
+or `"none"`).
 
 - With `"none"`, `build:osui` and the sync check's OutSystems UI pin step are skipped. The
   specimen pages, the review Artifact, `validate:theme`, `audit:tokens` and `specs:tokens` load no

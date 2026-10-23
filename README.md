@@ -38,10 +38,9 @@ npm run build:osui                                 # skipped when framework is "
 npm run build:theme
 ```
 
-   `npm run init` asks whether the project builds on OutSystems UI. A brand theme does. A
-   migration of an established design system (USWDS, GOV.UK Frontend, Material…) usually
-   doesn't: answer *no*, and the design system is built as it is, from its own tokens, on a theme
-   with no base theme (`"framework": "none"`).
+   `npm run init` asks whether the project builds on OutSystems UI. The answer is *yes* unless
+   the owner explicitly says not to use it. Answer *no* only then, and the design system is built
+   from its own tokens on a theme with no base theme (`"framework": "none"`).
 
 4. Write `specs/foundations/` from the brand guidelines and the Figma library, and fill the
    environment sections of `specs/foundations/platform.md`.

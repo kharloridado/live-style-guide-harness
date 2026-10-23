@@ -77,11 +77,11 @@ if (!["ODC", "O11"].includes(environment)) {
   throw new Error(`Unknown environment "${environment}". Expected ODC or O11.`);
 }
 
-/* Whether the theme stacks on OutSystems UI. A brand theme does, redefining the framework's
- * variables. A migration of an established design system (USWDS, GOV.UK Frontend, Material…)
- * does not: it is built as it is, from its own tokens, on a theme with no base theme. */
+/* Whether the theme stacks on OutSystems UI. It does by default. Only when the owner explicitly
+ * says not to use it is the theme standalone: built from the design system's own tokens, with no
+ * base theme. */
 const frameworkRaw = String(await ask(
-  "Build on OutSystems UI? yes = a brand theme on OutSystems UI; no = migrating an established design system (USWDS, GOV.UK, Material…) as is",
+  "Build on OutSystems UI? (yes unless the owner explicitly said not to use OutSystems UI)",
   cfg.framework === "none" ? "no" : "yes",
   "framework"
 )).trim().toLowerCase();
