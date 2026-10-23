@@ -30,6 +30,10 @@ then clear what `check:state` now warns about.
 
 ### Added
 
+- **Three platform rules from an O11 delivery** (`specs/foundations/platform.md` 10–12): a
+  per-row class goes on the Row Cells, because Row Style is evaluated once per table; a table-row
+  event must change its own list by index, not with ListFilter; and a consumer keeps the producer
+  version it was compiled with, so a delivery is checked in the consumer's own CSS.
 - **Assess a design before building it.** The plugin's `/lsg:assess` takes a Figma mockup and
   says, region by region, what the Live Style Guide already has, what needs a new variant, what
   comes from OutSystems UI and what is new, with every value matched to a token. The plan lives in

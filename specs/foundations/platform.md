@@ -131,6 +131,42 @@ The traps, all hit on this project:
   `data-checkbox`.** The span breaks any layout that assumes the input is a direct flex child;
   a restyle is safe only when it positions the input absolutely or selects it as a descendant.
 
+### 10. A per-row class goes on the Row Cells — a Reactive Table evaluates Row Style once
+
+The Table widget's Row Style is compiled into one value for the whole table, evaluated outside the row
+loop, where the current row number is 0. An expression on the current row therefore gives every row the
+same class. A Row Cell's Style **is** evaluated per row. Put a row-state modifier on every Row Cell, or
+set it on the `<tr>` from a JavaScript node keyed on `<List>.CurrentRowNumber` and called from the
+screen's OnRender (which fires after the first render and after every fetch, page change and sort).
+Write the CSS so the modifier matches on the `td` and on the `<tr>`.
+
+A row modifier on Row Style published without an error and never appeared on a single row; the compiled
+screen script showed the one cached table-level value. Seen on O11 Reactive; ODC runs the same client
+runtime, so check it on the first ODC table.
+
+### 11. Inside a table-row event, `List.Current` is the clicked row — never ListFilter the table's own list
+
+A screen action fired from a widget in a Table row runs in that row's iteration. A ListFilter whose
+condition reads `GetX.List.Current…` compares every element with the **clicked** row, not with the
+element being filtered. Change rows by index instead: `ListRemove(GetX.List, RowIndex)`,
+`ListInsert(…, RowIndex + 1)`, `GetX.List[RowIndex].…`, with `RowIndex` passed in as
+`GetX.List.CurrentRowNumber` from the row's link.
+
+A Delete built as mark-then-ListFilter removed nothing on one click and every row on the next.
+
+### 12. A consumer runs the producer version it was last compiled with — publishing the producer is not enough
+
+On O11 a Reactive app compiles the stylesheets of the themes it references into its own module and serves
+its own copy; publishing the theme module updates only the theme's copy. Every consumer keeps the version
+it was last compiled with until its references are refreshed and it is republished. On ODC a library is
+versioned, and each app must update to the new version and be republished. Either way, a new public
+Client Action or Block reaches a consumer only once it is added to that consumer's dependencies (Manage
+Dependencies), which is a person's step.
+
+After a theme publish, the theme's CSS had the new rules and the consumer's copy did not, and the publish
+listed every consumer as outdated. Verify a delivery in a consumer's own served CSS and compiled
+scripts, never the producer's.
+
 ## This project's environment and modules
 
 `project.config.json` → `environment` says whether this is **ODC** or **O11**, and `modules` names
