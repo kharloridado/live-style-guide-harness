@@ -10,7 +10,7 @@
  * Usage:  node build/check-config.mjs
  * Exits non-zero (loudly) on any violation. */
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { projectConfig, root } from "./lib/project-config.mjs";
 
 const PLACEHOLDER_RE = /<<[A-Z_/]+>>/;
@@ -83,6 +83,19 @@ if (pk.mode === "submodule" && !pk.pin) {
     `platformKnowledge.pin is null. Pin the pack to a tag or SHA — on "main" the block ` +
     `catalog can move under a running project with no commit in this repo.`
   );
+}
+
+/* ---- 4c. the UI framework, and the widget library an LSG documents ------------- */
+if (cfg.uiFramework !== undefined && !["outsystems-ui", "none"].includes(cfg.uiFramework)) {
+  errors.push(`uiFramework is ${JSON.stringify(cfg.uiFramework)} — must be "outsystems-ui" or "none".`);
+}
+const wl = cfg.widgetLibrary;
+if (wl != null) {
+  if (typeof wl !== "object" || !wl.name || !wl.source) {
+    errors.push(`widgetLibrary must be null or { "name": "<WidgetLibrary asset>", "source": "<path to its osfe source>" }.`);
+  } else if (!existsSync(resolve(root, wl.source))) {
+    notes.push(`widgetLibrary.source ${wl.source} is not on disk here — the widgets:* generators need it.`);
+  }
 }
 
 /* ---- 5. no placeholder or example prefix may survive in real project files ------ */

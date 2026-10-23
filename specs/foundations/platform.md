@@ -131,6 +131,63 @@ The traps, all hit on this project:
   `data-checkbox`.** The span breaks any layout that assumes the input is a direct flex child;
   a restyle is safe only when it positions the input absolutely or selects it as a descendant.
 
+### 10. A List laid out as a grid puts the grid on `[data-list]`, and overrides two inline styles
+
+The List widget wraps its items in its own `[data-list]` element, puts a `<script>` first with an
+inline `display`, and virtualizes off-screen items with an inline `height: 0`. A grid on the List's
+parent therefore breaks three ways: the items are not its children, the script takes a cell, and
+rows below the fold collapse. Virtualization cannot be turned off from the model, so the fix is in
+the theme, scoped under the class on the List's parent:
+
+```css
+.<prefix>card-grid > [data-list] { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-m); }
+.<prefix>card-grid > [data-list] > script { display: none !important; }
+.<prefix>card-grid > [data-list] > [data-container] { height: auto !important; min-width: 0; }
+```
+
+The `!important`s beat inline styles the runtime writes — the case rule 9 allows.
+
+### 11. In-page anchors use `data-anchor`, and the scroller is `.active-screen`
+
+An element `id` cannot be set as an extended attribute (rule 2: the platform owns ids), so a
+table-of-contents target carries `data-anchor="<name>"`, and one shared client action finds it and
+calls `scrollIntoView`. The scroll container on ODC is `.active-screen`, not the document; scrolling
+the window moves nothing. Move focus to the target too (`tabindex="-1"` +
+`focus({ preventScroll: true })`) and jump instantly under `prefers-reduced-motion` — the plugin's
+`outsystems-custom-block/references/aria-recipes.md` has the action. A Link's OnClick calls screen
+actions only, so each screen wraps the shared action in a one-node screen action.
+
+### 12. The Table widget renders `role="grid"`; a read-only table needs `role="table"`
+
+`grid` tells a screen reader to expect cell navigation. Set `role="table"` as an attribute on any
+Table that shows reference data, with `th scope="col"` header cells.
+
+## Without OutSystems UI
+
+`project.config.json` → `uiFramework: "none"` is for an app that does not use OutSystems UI — a Live
+Style Guide that documents a widget library, say. Then `build:osui` skips itself, specimen pages
+stack the theme alone (as the app does), and tokens are the theme's own: no framework variables to
+redefine.
+
+On ODC the web app template has no blank option: it brings OutSystems UI, OutSystemsCharts and
+OutSystemsMaps. The app's first Mentor turn removes them — every template screen, block, layout,
+menu and action that depends on them, then the references — and sets a theme with **no base
+theme**, holding the project's CSS. Say "Do not use any OutSystems UI widget, block or action
+anywhere" in every later prompt.
+
+## Widget libraries
+
+An app that uses an osfe widget library is built **slots first, widgets last**: Mentor cannot add
+a `WidgetLibrary` dependency or open a revision that has one. Mentor builds the rest with a slot
+(a `Slot_<Purpose>` Container with the `<prefix>slot` class and a Text naming the widget and its
+bindings) wherever a widget goes; the widgets are dropped in in ODC Studio. `specs/widget-library/`
+holds the generators' inputs and outputs for a Live Style Guide of one.
+
+Placing the widgets has also broken the build: a revision with the dependency and no widgets
+published, and the next one, with 18 widgets placed, failed with `OS-FEW-POST-50000` /
+`OS-DPL-50205`. Publish after each screen's widgets, so a failure points at one screen, and report a
+build-engine failure with `findings/PLATFORM-DEFECT-TEMPLATE.md`.
+
 ## This project's environment and modules
 
 `project.config.json` → `environment` says whether this is **ODC** or **O11**, and `modules` names

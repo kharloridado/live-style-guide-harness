@@ -14,7 +14,7 @@
 import { readFileSync, existsSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
-import { root } from "./lib/project-config.mjs";
+import { root, usesOutSystemsUI } from "./lib/project-config.mjs";
 import { checkStructure } from "./lib/css-structure.mjs";
 
 const themeFile = join(root, "dist", "theme.css");
@@ -127,7 +127,7 @@ for (const m of code.matchAll(/var\(\s*(--[\w-]+)\s*([,)])/g)) {
   }
 }
 
-if (dangling.size && !existsSync(osuiBase)) {
+if (dangling.size && !existsSync(osuiBase) && usesOutSystemsUI()) {
   errors.push(
     `${dangling.size} token reference(s) cannot be checked: the OutSystems UI base is not built.\n\n` +
       `    review/vendor/outsystems-ui/outsystems-ui.css is missing, so tokens the framework owns\n` +

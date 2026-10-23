@@ -12,8 +12,12 @@ import * as sass from 'sass';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { projectConfig } from './lib/project-config.mjs';
+import { projectConfig, usesOutSystemsUI } from './lib/project-config.mjs';
 
+if (!usesOutSystemsUI()) {
+	console.log('build:osui → skipped: project.config.json → uiFramework is "none", so there is no framework base.');
+	process.exit(0);
+}
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PLATFORM = projectConfig().environment === 'O11' ? 'O11' : 'ODC';
 const ENTRY = resolve(root, `vendor/outsystems-ui/src/scss/${PLATFORM}.OutSystemsUI.scss`);

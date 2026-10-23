@@ -30,6 +30,26 @@ then clear what `check:state` now warns about.
 
 ### Added
 
+- **Projects without OutSystems UI.** `project.config.json` → `uiFramework: "none"` (asked by
+  `npm run init`, flag `--ui-framework`) skips `build:osui` and stacks specimen pages on the theme
+  alone. `specs/foundations/platform.md` → "Without OutSystems UI" has the first Mentor turn that
+  removes what the ODC web app template brings. Existing projects need no change: a missing field
+  means `outsystems-ui`.
+- **A Live Style Guide for a widget library.** For an LSG that documents an osfe `WidgetLibrary`
+  (`widgetLibrary` in the config), `npm run widgets:catalogue` writes the static-entity seed with
+  every property read from the widgets' code, and `npm run widgets:pages` writes one screen spec
+  per widget (one file per Mentor batch) plus the Studio slot checklist. Computed initial values
+  move to OnInitialize, sample entities come from one explicit map, and oversized batches and
+  seeds are flagged. `specs/widget-library/README.md` explains the files.
+- **`build/gate/probe-pages.js`.** Checks every page of a published app from one page of it, in
+  hidden iframes: one h1, sections in order, a TOC link per section, table roles, rows rendered,
+  the active link. Run it after each batch publish.
+- **`findings/PLATFORM-DEFECT-TEMPLATE.md`**, for OutSystems failures (build-engine `OS-*` codes, a
+  tool that cannot do what it documents), kept out of the findings register.
+- **Platform rules 10–12**: a List as a grid, in-page anchors on `.active-screen`, and `role="table"`
+  on read-only Tables. The Mentor Studio prompt guide gains "Widget libraries — slots first,
+  widgets last", and the gate README says to wait for data rows before measuring a delivered
+  screen.
 - **Assess a design before building it.** The plugin's `/lsg:assess` takes a Figma mockup and
   says, region by region, what the Live Style Guide already has, what needs a new variant, what
   comes from OutSystems UI and what is new, with every value matched to a token. The plan lives in

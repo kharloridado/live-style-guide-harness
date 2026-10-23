@@ -153,6 +153,30 @@ the target HTML, then "No CSS, no JavaScript, no other changes. List what you ch
 
 ---
 
+## Widget libraries — slots first, widgets last
+
+Mentor cannot add a dependency on a `WidgetLibrary` asset ("An internal error occurred while
+referencing producer") and cannot open an app revision that has one. A handover for screens that
+use a widget library's widgets is therefore two steps, in this order:
+
+1. **The Mentor prompt**, run on a revision **without** the dependency, builds everything else and
+   leaves a **slot** where each widget goes: a Container named `Slot_<Purpose>`, Style Classes
+   `<prefix>slot`, holding one Text that names the widget and every binding —
+   `ReactAria Switch · Label "Is pending" · Is selected = ExampleIsPending`. Every variable and
+   action a slot names is created in the same prompt. For many screens, attach one spec file per
+   batch (5–7 screens, at most 14 KB; `npm run widgets:pages` writes them) and publish after each.
+2. **The Studio step.** Add the dependency once (Manage Dependencies → the library → all widgets →
+   Apply), then for each slot: delete its Text, drop the widget into the Container, set exactly
+   what the text says. **The slot text is the checklist** (`specs/widget-library/widget-slots.md`
+   lists them all). Publish per screen. An enum property of a library widget cannot be bound, so
+   an example that switches one has a slot per value, each with a Visible condition.
+
+After the Studio step the app is changed in Studio, or through Mentor from the last revision
+without the dependency — which then has to be told explicitly to publish over the newer
+revisions, losing the placed widgets, and step 2 runs again.
+
+---
+
 ## L5 — a custom Block with a required Script (the default)
 
 A component OutSystems UI does not ship is an OutSystems Block: widgets, placeholders and typed

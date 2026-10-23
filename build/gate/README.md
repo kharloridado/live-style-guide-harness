@@ -102,6 +102,38 @@ specimens, the number is not the claim — find the claim.
   the harness supplies that ODC does not, or the reverse, is a defect waiting at paste time.
 - **A baseline restated by hand goes through CI before it is trusted.**
 
+### Measure after the data arrives
+
+Aggregates resolve after first paint, so a probe run at load on a delivered screen (a `url` probe
+file) measures empty lists. Set `waitFor` to an element that exists only once the data is there —
+a row of the list (`.my-table tbody tr`), not the list itself, which renders empty first.
+
+## `probe-pages.js` — every page of a published app, from one page
+
+A browser-console script, not a Node one: it runs **inside** the published app, so it needs no
+login handling and no port. It loads each route in a hidden same-origin iframe and reads its DOM,
+which costs one browser call instead of one navigation per route — 44 Live Style Guide pages in
+one go.
+
+```js
+// paste build/gate/probe-pages.js, then:
+await probePages(["Button", "Checkbox", "Table"], {
+  sections: ["Example", "Usage", "Accessibility", "API", "Styling"],
+  slot: ".<prefix>slot",
+})
+// → { checked: 3, failing: [] }   only pages with problems are listed
+```
+
+Per page: one `h1`; the expected `h2`s in order (others may sit between them); a
+table-of-contents link per `h2`; no read-only table left on the Table widget's default
+`role="grid"`; every table has rows; an `aria-current="page"` navigation link; slots, when asked.
+Every selector is an option. Run it after every batch publish, on the batch's pages. It is the
+check Mentor's validation cannot do: a heading placed after its own content passes with 0 errors.
+
+It never scrolls. A hidden or background frame runs no `requestAnimationFrame`, so a smooth scroll
+never moves there; test a table of contents by the focused element or an instant
+`scrollIntoView`, not by a scroll position.
+
 ## `compare-measurements.mjs`
 
 ```bash

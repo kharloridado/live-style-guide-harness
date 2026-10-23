@@ -9,6 +9,7 @@
   "odcTenant": "<<ODC_TENANT>>",
   "repo": "<<OWNER/REPO>>",
   "environment": "ODC",
+  "uiFramework": "outsystems-ui",
 
   "modules": {
     "$comment": "Where the work lands, by role. ODC: kind library | app. O11: kind CrossDevice | ReactiveLibrary, and app names its application. npm run init fills these with the playbook's default names.",
@@ -30,6 +31,8 @@
     "pin": null,
     "obtained": "2026-08-19"
   },
+
+  "widgetLibrary": null,
 
   "knownFalsePositiveClasses": [],
 

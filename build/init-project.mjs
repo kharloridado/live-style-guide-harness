@@ -77,6 +77,24 @@ if (!["ODC", "O11"].includes(environment)) {
   throw new Error(`Unknown environment "${environment}". Expected ODC or O11.`);
 }
 
+/* "none" for an app built without OutSystems UI (an LSG for a widget library, say): build:osui
+ * skips, and specimen pages stack the theme alone. */
+const uiFramework = String(await ask("UI framework: outsystems-ui or none", cfg.uiFramework || "outsystems-ui", "ui-framework")).trim().toLowerCase();
+if (!["outsystems-ui", "none"].includes(uiFramework)) {
+  throw new Error(`Unknown UI framework "${uiFramework}". Expected outsystems-ui or none.`);
+}
+/* The WidgetLibrary asset an LSG documents, for the widgets:* generators. Blank: none. Optional
+ * in a non-interactive run, unlike the values above. */
+const widgetLibraryName = String(
+  rl || flags["widget-library"] !== undefined
+    ? await ask("Widget library the LSG documents (blank if none)", cfg.widgetLibrary?.name || "", "widget-library")
+    : cfg.widgetLibrary?.name || ""
+).trim();
+const widgetLibrary = widgetLibraryName
+  ? { name: widgetLibraryName, source: String(await ask("Path to its osfe source, from the repo root", cfg.widgetLibrary?.source || "", "widget-library-source")).trim() }
+  : null;
+if (widgetLibrary && !widgetLibrary.source) throw new Error("A widget library needs --widget-library-source, the path to its osfe source.");
+
 /* Where the work lands: every module, and on O11 every application, by role. Defaults follow the
  * playbook's naming (ODC: NimbusTheme / NimbusPatterns / NimbusLiveStyleGuide / Template_Nimbus;
  * O11: Nimbus_Theme … in "<Customer> Theme" and "<Customer> Live Style Guide"). Accept them unless
@@ -143,11 +161,13 @@ Object.assign(cfg, {
   classPrefix: prefix,
   jsNamespace: jsNs,
   environment,
+  uiFramework,
   modules: { $comment: cfg.modules?.$comment, ...modules },
   // null, not a placeholder, on O11 or with no MCP access: there is no tenant to fill in later.
   odcTenant: environment === "O11" || noMcp ? null : odcTenant || "<<ODC_TENANT>>",
   repo,
   figma: { fileKey: figmaKey || "<<FIGMA_FILE_KEY>>", url: figmaUrl || "<<FIGMA_URL>>" },
+  widgetLibrary,
 });
 cfg.findings.ticketTarget = repo;
 writeFileSync(CONFIG, JSON.stringify(cfg, null, 2) + "\n");
