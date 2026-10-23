@@ -33,3 +33,8 @@ export function moduleName(role) {
   return cfg.modules?.[role]?.name ?? (role === "theme" ? cfg.odcThemeModule : undefined);
 }
 
+/** False for a project built without OutSystems UI (`uiFramework: "none"`): no framework base is
+ *  compiled, and specimen pages stack the theme alone, as the app does. */
+export function usesOutSystemsUI() {
+  return projectConfig().uiFramework !== "none";
+}

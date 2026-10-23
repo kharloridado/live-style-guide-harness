@@ -58,7 +58,8 @@ tokens/           redefines OutSystems UI variables in place; prefixed tokens on
 src/blocks/       BEM ExtendedClass overrides of native OutSystems UI widgets
 src/components/   the required Script of each custom Block (L5): init / update / destroy
 src/lsg/          Live Style Guide tooling (pages rendered from the tokens) — not a deliverable
-build/            theme build and checks, token audit, release, gate/ (fidelity), review/ (Artifacts)
+build/            theme build and checks, token audit, release, gate/ (fidelity, page probe),
+                  review/ (Artifacts), widget-library/ (catalogue and page-spec generators)
 assessments/      per new screen or mockup: what the Live Style Guide already covers, and the plan
 findings/         the register (FND-NNN) and ticket payloads — findings/README.md
 handover/         developer handover bodies with the code to paste embedded
@@ -79,6 +80,7 @@ CHANGELOG.md      release notes — the one file the owner reads; write entries 
 | `npm run release -- patch\|minor` | Version, CHANGELOG, ship build, ODC docs; prints the remaining steps. |
 | `npm run specs:tokens` | Regenerate the token reference after a token change. |
 | `npm run sync` | Non-blocking drift report: pins, stale refs, specs naming unknown tokens. |
+| `npm run widgets:catalogue` / `widgets:pages` | A Live Style Guide for a widget library only: seed data and page specs from the widgets' code (`specs/widget-library/README.md`). |
 
 A fresh clone or worktree needs `npm install`, `git submodule update --init vendor/outsystems-ui`
 and `npm run build:osui` before any gate or review command; the plugin's session hook names

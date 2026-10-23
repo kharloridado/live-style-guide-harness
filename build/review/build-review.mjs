@@ -12,7 +12,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync, execSync } from 'node:child_process';
-import { projectConfig, root } from '../lib/project-config.mjs';
+import { projectConfig, root, usesOutSystemsUI } from '../lib/project-config.mjs';
 import { allItems, kindOf, specDir } from '../lib/specs.mjs';
 import { repoPathFor } from '../lib/virtual-origin.mjs';
 import { compare } from '../gate/compare-measurements.mjs';
@@ -46,7 +46,7 @@ function inlineFonts(css) {
 
 function sharedAssets(ids) {
   const styles = [
-    { href: OSUI_CSS, css: read(OSUI_CSS) },
+    ...(usesOutSystemsUI() ? [{ href: OSUI_CSS, css: read(OSUI_CSS) }] : []),
     { href: THEME_CSS, css: inlineFonts(read(THEME_CSS)) },
     ...blockFiles().map((f) => ({ href: `src/blocks/${f}`, css: read(`src/blocks/${f}`) })),
     { href: 'build/review/specimen.css', css: read('build/review/specimen.css') },

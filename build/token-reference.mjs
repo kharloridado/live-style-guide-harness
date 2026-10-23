@@ -9,7 +9,7 @@
  *   npm run specs:tokens -- --check exit 1 if the committed file is stale (used by sync) */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { projectConfig, root } from './lib/project-config.mjs';
+import { projectConfig, root, usesOutSystemsUI } from './lib/project-config.mjs';
 
 const OSUI = 'review/vendor/outsystems-ui/outsystems-ui.css';
 const THEME = 'dist/theme.css';
@@ -54,8 +54,9 @@ function notesFrom(css) {
 }
 
 function build() {
-  for (const p of [OSUI, THEME]) if (!existsSync(join(root, p))) throw new Error(`${p} is missing — run npm run build:osui and npm run build:theme`);
-  const osuiCss = readFileSync(join(root, OSUI), 'utf8');
+  const inputs = usesOutSystemsUI() ? [OSUI, THEME] : [THEME];
+  for (const p of inputs) if (!existsSync(join(root, p))) throw new Error(`${p} is missing — run npm run build:osui and npm run build:theme`);
+  const osuiCss = usesOutSystemsUI() ? readFileSync(join(root, OSUI), 'utf8') : '';
   const themeCss = readFileSync(join(root, THEME), 'utf8');
   const tokens = new Map();
   for (const [name, value] of harvest(osuiCss)) tokens.set(name, { value, framework: value, source: 'OutSystems UI' });

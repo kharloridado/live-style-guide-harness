@@ -26,6 +26,8 @@
     "embed:handover": "node build/embed-handover-code.mjs",
     "docs:odc": "node build/odc-docs.mjs",
     "docs:odc:record": "node build/odc-docs.mjs --record",
+    "widgets:catalogue": "node build/widget-library/build-catalogue.mjs",
+    "widgets:pages": "node build/widget-library/build-pages.mjs",
     "release": "node build/release.mjs"
   },
   "devDependencies": {
