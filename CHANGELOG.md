@@ -22,6 +22,24 @@ and what they have to re-paste.
 
 ## [Unreleased]
 
+**Migrate an established design system without OutSystems UI.** `npm run init` now asks
+whether the project builds on OutSystems UI. A brand theme does. A migration of an established
+design system (USWDS, GOV.UK Frontend, Material…) can answer *no*, and is then built as it is,
+from its own tokens, on a theme with no base theme. The answer is `project.config.json` →
+`framework` (`"outsystems-ui"`, the default, or `"none"`).
+
+- With `"none"`, `build:osui` and the sync check's OutSystems UI pin step are skipped. The
+  specimen pages, the review Artifact, `validate:theme`, `audit:tokens` and `specs:tokens` load no
+  framework base. A component that passes then passes on the theme alone, as it renders in the
+  modules, and a `var()` that only OutSystems UI would have defined is reported as dangling.
+- `audit:tokens` and `specs:tokens` recognise prefixed tokens (`--<prefix>color-*`) and the
+  common token names of source design systems (`units-`, `radius-`, `z-index-`, `measure-`).
+- `check:config` validates `framework`. The token-file headers, `CLAUDE.md`, the README and
+  `specs/foundations/platform.md` describe both modes.
+
+Existing projects: take `build/` from the template. Nothing changes until you add
+`"framework": "none"`.
+
 **Leaner, and shaped around how projects actually work.** Board mode and the unattended loop
 runner are gone — neither was used by a real project. CLAUDE.md is a short map. New checks catch
 the gaps two real projects hit, and `npm run release` does the mechanical half of a release.

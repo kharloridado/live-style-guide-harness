@@ -171,6 +171,17 @@ if (!["ODC", "O11"].includes(environment)) {
   );
 }
 
+/* ---- framework: whether the theme stacks on OutSystems UI ----------------------- */
+const framework = cfg.framework ?? "outsystems-ui";
+if (!["outsystems-ui", "none"].includes(framework)) {
+  errors.push(
+    `framework is ${JSON.stringify(framework)} — must be "outsystems-ui" (the theme redefines the ` +
+      `framework's variables) or "none" (a standalone theme with no base theme).`
+  );
+} else if (framework === "none") {
+  notes.push("framework is none — no OutSystems UI base under the specimens, the validator or the token audit.");
+}
+
 /* ---- modules: where the work lands, by role, valid for the platform ------------- */
 const KINDS = { ODC: ["library", "app"], O11: ["CrossDevice", "ReactiveLibrary"] };
 const REQUIRED_ROLES = ["theme", "patterns", "liveStyleGuide"];

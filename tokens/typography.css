@@ -1,6 +1,7 @@
 /* @section Typography / Type */
 /* typography.css — what OutSystems UI does not tokenize (family, extra weights, line-heights)
  * as <<CLASS_PREFIX>>* tokens, plus any framework size this design changes. Self-hosted faces go
- * in vendor/fonts/ and are declared with @font-face on the ODC theme module's path. */
+ * in vendor/fonts/ and are declared with @font-face on the ODC theme module's path. With
+ * `framework: "none"`, every family, size, weight and line-height the design system defines. */
 :root {
 }

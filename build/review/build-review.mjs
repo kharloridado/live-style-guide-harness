@@ -46,7 +46,8 @@ function inlineFonts(css) {
 
 function sharedAssets(ids) {
   const styles = [
-    { href: OSUI_CSS, css: read(OSUI_CSS) },
+    /* Slot 0 is always the framework base (empty when there is none): the template reads it by index. */
+    { href: OSUI_CSS ?? 'framework:none', css: OSUI_CSS ? read(OSUI_CSS) : '' },
     { href: THEME_CSS, css: inlineFonts(read(THEME_CSS)) },
     ...blockFiles().map((f) => ({ href: `src/blocks/${f}`, css: read(`src/blocks/${f}`) })),
     { href: 'build/review/specimen.css', css: read('build/review/specimen.css') },

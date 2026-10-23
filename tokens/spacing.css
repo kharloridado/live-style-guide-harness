@@ -1,5 +1,6 @@
 /* @section Spacing / Scale */
 /* spacing.css — the framework's spacing steps this design changes, and nothing else. An empty
- * file is the expected shape when the design matches the framework's scale. */
+ * file is the expected shape when the design matches the framework's scale. With
+ * `framework: "none"`, the design system's whole spacing scale. */
 :root {
 }

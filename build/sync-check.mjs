@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* build/sync-check.mjs — which specs might need updating. Reports; never edits; always exits 0.
  *
- *   1. OutSystems UI: the pinned submodule commit against the latest upstream release tag.
+ *   1. OutSystems UI: the pinned submodule commit against the latest upstream release tag
+ *      (skipped with `framework: "none"`).
  *   2. The token reference: is specs/tokens/token-reference.md current with dist/theme.css?
  *   3. Usage specs: any --token a spec names that the token set no longer has.
  *   4. Frozen refs: pulled from a Figma file other than project.config.json figma.fileKey.
@@ -11,7 +12,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync, spawnSync } from 'node:child_process';
-import { projectConfig, root } from './lib/project-config.mjs';
+import { projectConfig, root, usesOutSystemsUI } from './lib/project-config.mjs';
 import { allItems, kindOf, specDir } from './lib/specs.mjs';
 
 const cfg = projectConfig();
@@ -26,7 +27,9 @@ const say = (section, lines) => {
 };
 
 /* 1 */
-{
+if (!usesOutSystemsUI()) {
+  console.log('\n## OutSystems UI pin\n  skipped (framework is none)');
+} else {
   const lines = [];
   const pin = (git('ls-tree HEAD vendor/outsystems-ui').split(/\s+/)[2] || '').slice(0, 12);
   const pinnedTag = exists('vendor/outsystems-ui/.git') ? git('-C vendor/outsystems-ui describe --tags --abbrev=0') : '';

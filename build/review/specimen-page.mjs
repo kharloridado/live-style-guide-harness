@@ -1,6 +1,6 @@
 /* specimen-page.mjs — assembles review/<id>/specimen.html, the page the fidelity gate measures.
  *
- * Load order: the compiled OutSystems UI base, dist/theme.css (tokens + block overrides, the
+ * Load order: the compiled OutSystems UI base (none with `framework: "none"`), dist/theme.css (tokens + block overrides, the
  * ODC paste), then every src/blocks file again as its own sheet in src/blocks/index.css order,
  * then the specimen chrome. The per-file sheets repeat what theme.css already holds, in the same
  * order, so the cascade is unchanged — they exist so a probe can find `<prefix>input.css` by href and
@@ -12,10 +12,11 @@
  * probe. */
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { projectConfig, root } from '../lib/project-config.mjs';
+import { projectConfig, root, usesOutSystemsUI } from '../lib/project-config.mjs';
 import { specDir } from '../lib/specs.mjs';
 
-export const OSUI_CSS = 'review/vendor/outsystems-ui/outsystems-ui.css';
+/** The framework base under the theme, or null when the theme stands alone. */
+export const OSUI_CSS = usesOutSystemsUI() ? 'review/vendor/outsystems-ui/outsystems-ui.css' : null;
 export const THEME_CSS = 'dist/theme.css';
 
 export class SpecimenError extends Error {}
@@ -29,9 +30,8 @@ function newestMtime(dir, ext) {
 
 /** dist/theme.css is gitignored, so a stale copy measures a page nobody ships. Refuse it. */
 export function assertInputsFresh() {
-  const osui = join(root, OSUI_CSS);
   const theme = join(root, THEME_CSS);
-  if (!existsSync(osui)) throw new SpecimenError(`${OSUI_CSS} is missing — run: npm run build:osui`);
+  if (OSUI_CSS && !existsSync(join(root, OSUI_CSS))) throw new SpecimenError(`${OSUI_CSS} is missing — run: npm run build:osui`);
   if (!existsSync(theme)) throw new SpecimenError(`${THEME_CSS} is missing — run: npm run build:theme`);
   const src = Math.max(newestMtime(join(root, 'tokens'), '.css'), newestMtime(join(root, 'src', 'blocks'), '.css'));
   if (statSync(theme).mtimeMs < src) {
@@ -69,7 +69,8 @@ export function resolveMarkers(html, rel) {
   return html
     .replace(/<script data-src="([^"]+)"><\/script>/g, (_, p) => `<script src="${rel}${p}"></script>`)
     .replace(/<iframe([^>]*)\sdata-framework-baseline([^>]*)><\/iframe>/g, (_, a, b) => {
-      const doc = `<!DOCTYPE html><html><head><link rel="stylesheet" href="${rel}${OSUI_CSS}"></head><body></body></html>`;
+      const base = OSUI_CSS ? `<link rel="stylesheet" href="${rel}${OSUI_CSS}">` : '';
+      const doc = `<!DOCTYPE html><html><head>${base}</head><body></body></html>`;
       return `<iframe${a}${b} srcdoc="${doc.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"></iframe>`;
     });
 }
@@ -89,8 +90,7 @@ export function specimenHtml(id, rel = '../../') {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${id} — specimen</title>
-<link rel="stylesheet" href="${rel}${OSUI_CSS}">
-<link rel="stylesheet" href="${rel}${THEME_CSS}">
+${OSUI_CSS ? `<link rel="stylesheet" href="${rel}${OSUI_CSS}">\n` : ''}<link rel="stylesheet" href="${rel}${THEME_CSS}">
 ${blocks}
 <link rel="stylesheet" href="${rel}build/review/specimen.css">
 </head>
